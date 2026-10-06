@@ -1,0 +1,25 @@
+import type { MuscleId } from '../types'
+
+export const MUSCLE_NAMES: Record<MuscleId, string> = {
+  quads: 'Квадрицепсы',
+  glutes: 'Ягодичные',
+  hamstrings: 'Задняя поверхность бедра',
+  adductors: 'Приводящие бедра',
+  calves: 'Икроножные',
+  chest: 'Грудные',
+  frontDelts: 'Передние дельты',
+  sideDelts: 'Средние дельты',
+  rearDelts: 'Задние дельты',
+  upperBack: 'Ромбовидные и средняя трапеция',
+  lowerTraps: 'Нижняя трапеция',
+  lats: 'Широчайшие',
+  erectors: 'Разгибатели спины',
+  core: 'Мышцы живота',
+  obliques: 'Косые мышцы живота',
+  biceps: 'Бицепс',
+  triceps: 'Трицепс',
+  forearms: 'Предплечья',
+  serratus: 'Передняя зубчатая',
+  neckFlexors: 'Глубокие сгибатели шеи',
+  hipFlexors: 'Сгибатели бедра',
+}
