@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
-import { Activity, ChevronRight, Dumbbell, Moon, PersonStanding, Play, Plus, Settings2, Timer, Waves } from 'lucide-react'
+import { Activity, Check, ChevronDown, ChevronRight, Dumbbell, Moon, PersonStanding, Play, Plus, Settings2, Timer, Waves } from 'lucide-react'
 import type { WorkoutId, WorkoutLog } from '../types'
 import { useStore } from '../store/store'
 import { dayStatus, isComplex, latestWeight, postureStreak, postureThisWeek, programWeek, rawWeek, weeklyPace } from '../store/selectors'
-import { addDays, fmtDayMonth, fmtShort, fmtLong, mondayOf, plural, todayISO, weekdayIdx, WEEKDAYS_FULL } from '../lib/date'
+import { addDays, fmtDayMonth, fmtShort, fmtLong, mondayOf, plural, todayISO, weekdayIdx, WEEKDAYS_FULL, WEEKDAYS_SHORT } from '../lib/date'
 import { navigate } from '../lib/router'
 import { EXERCISES } from '../data/exercises'
 import { BACK_PER_WEEK, BACK_TOTAL_MIN, POSTURE_TOTAL_MIN } from '../data/posture'
@@ -161,6 +161,15 @@ export function Home() {
         </Button>
       </Card>
 
+      {/* Все три силовые недели */}
+      <SectionTitle>Силовые на неделе</SectionTitle>
+      <WeekWorkouts
+        week={week}
+        today={today}
+        weekLogs={weekLogs}
+        onStart={(id) => setStartId({ id, date: today })}
+      />
+
       {/* Неделя */}
       <SectionTitle>Эта неделя</SectionTitle>
       <Card className="px-2 py-2">
@@ -228,6 +237,92 @@ export function Home() {
       <WeightSheet open={weightOpen} onClose={() => setWeightOpen(false)} />
       <ProfileSheet open={profileOpen} onClose={() => setProfileOpen(false)} />
       <StartWorkoutGuard request={startId} onClose={() => setStartId(null)} />
+    </div>
+  )
+}
+
+function WeekWorkouts({
+  week,
+  today,
+  weekLogs,
+  onStart,
+}: {
+  week: number
+  today: string
+  weekLogs: WorkoutLog[]
+  onStart: (id: WorkoutId) => void
+}) {
+  const [open, setOpen] = useState<WorkoutId | null>(null)
+  const todayId = SCHEDULE[weekdayIdx(today)].workoutId
+  return (
+    <div className="space-y-2">
+      {(['A', 'B', 'C'] as WorkoutId[]).map((id) => {
+        const w = WORKOUTS[id]
+        const done = weekLogs.find((l) => l.workoutId === id)
+        const day = SCHEDULE.find((d) => d.workoutId === id)!
+        const isOpen = open === id
+        return (
+          <Card key={id} className={cx('p-0', todayId === id && !done && 'ring-accent/30')}>
+            <div className="flex items-center gap-3 p-3">
+              <button
+                type="button"
+                onClick={() => setOpen(isOpen ? null : id)}
+                aria-expanded={isOpen}
+                className="flex min-w-0 flex-1 items-center gap-3 text-left"
+              >
+                <span
+                  className={cx(
+                    'grid size-11 shrink-0 place-items-center rounded-2xl text-lg font-bold',
+                    done ? 'bg-accent text-accent-ink' : 'bg-accent/12 text-accent',
+                  )}
+                >
+                  {done ? <Check size={18} strokeWidth={3} /> : id}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-1.5 whitespace-nowrap font-semibold leading-tight">
+                    {w.title}
+                    {todayId === id && !done && (
+                      <Chip tone="accent" className="px-2 py-0.5">
+                        сегодня
+                      </Chip>
+                    )}
+                    <ChevronDown size={16} className={cx('shrink-0 text-mute transition-transform', isOpen && 'rotate-180')} />
+                  </span>
+                  <span className="mt-0.5 block truncate text-sm text-mute">
+                    {WEEKDAYS_SHORT[day.weekday]} · {w.focus} · {w.items.length} упр.
+                  </span>
+                </span>
+              </button>
+              {done ? (
+                <span className="shrink-0 text-sm font-medium text-accent">{fmtShort(done.date)}</span>
+              ) : (
+                <Button size="sm" className="shrink-0" onClick={() => onStart(id)} aria-label={`Начать ${w.title}`}>
+                  <Play size={14} fill="currentColor" /> Старт
+                </Button>
+              )}
+            </div>
+            {isOpen && (
+              <ul className="divide-y divide-white/[0.05] border-t border-white/[0.05] px-4 pb-2">
+                {w.items.map((it, i) => (
+                  <li key={it.exerciseId + i} className="flex items-center justify-between gap-3 py-2.5 text-[15px]">
+                    <span className="flex min-w-0 items-center gap-2.5">
+                      <span className="tabular w-4 shrink-0 text-xs text-mute">{i + 1}</span>
+                      <span className="truncate">{EXERCISES[it.exerciseId].short}</span>
+                    </span>
+                    <span className="tabular shrink-0 text-sm text-soft">
+                      {setsFor(it, i, week)} × {repsLabel(repsFor(it, week))}
+                      {EXERCISES[it.exerciseId].perSide ? '/стор.' : ''}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        )
+      })}
+      <p className="px-1 text-xs text-mute">
+        Нажми на тренировку, чтобы увидеть упражнения. Между силовыми — день отдыха или кардио.
+      </p>
     </div>
   )
 }
