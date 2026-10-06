@@ -1,0 +1,124 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/onest';
+
+@theme {
+  --font-sans: 'Onest Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --color-bg: #111316;
+  --color-surface: #181b1f;
+  --color-card: #1c2025;
+  --color-raised: #23282e;
+  --color-line: #2a3037;
+  --color-ink: #eef1f4;
+  --color-soft: #a3acb6;
+  --color-mute: #6f7882;
+  --color-accent: #2dd4bf;
+  --color-accent-strong: #5eead4;
+  --color-accent-ink: #0b1716;
+  /* UI-тона типов занятий */
+  --color-cardio: #f0935a;
+  --color-cardio-ink: #1f1206;
+  --color-posture: #6aa5f2;
+  --color-posture-ink: #0b1624;
+  /* Маркеры в календарях: проверены на различимость при дальтонизме (все пары) */
+  --color-mk-strength: #16a391;
+  --color-mk-cardio: #d95926;
+  --color-mk-posture: #3987e5;
+  --color-warn: #f2b35b;
+  --color-danger: #f48484;
+}
+
+@layer base {
+  html {
+    background: var(--color-bg);
+    color-scheme: dark;
+    -webkit-tap-highlight-color: transparent;
+    text-size-adjust: 100%;
+  }
+  body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    overscroll-behavior-y: contain;
+    -webkit-font-smoothing: antialiased;
+  }
+  button,
+  a,
+  input,
+  label {
+    touch-action: manipulation;
+  }
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@utility safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@utility safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes pop {
+  0% {
+    transform: scale(0.85);
+  }
+  60% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-sheet {
+  animation: sheet-in 0.28s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.animate-fade {
+  animation: fade-in 0.2s ease-out;
+}
+.animate-pop {
+  animation: pop 0.3s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-sheet,
+  .animate-fade,
+  .animate-pop {
+    animation: none;
+  }
+}
