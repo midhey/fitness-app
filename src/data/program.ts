@@ -7,7 +7,7 @@ export const WORKOUTS: Record<WorkoutId, Workout> = {
     id: 'A',
     title: 'Силовая A',
     focus: 'Присед и горизонтальная тяга',
-    minutes: '40–45 мин',
+    minutes: '45–50 мин',
     items: [
       { exerciseId: 'goblet_squat', sets: 3, reps: [10, 12], restSec: 90 },
       { exerciseId: 'one_arm_row', sets: 3, reps: [10, 12], restSec: 60 },
@@ -21,13 +21,14 @@ export const WORKOUTS: Record<WorkoutId, Workout> = {
         restSec: 45,
         repsFrom: [{ week: 3, reps: [8, 10] }],
       },
+      { exerciseId: 'triceps_ext', sets: 2, reps: [10, 12], restSec: 60 },
     ],
   },
   B: {
     id: 'B',
     title: 'Силовая B',
     focus: 'Наклон и вертикальный жим',
-    minutes: '40–45 мин',
+    minutes: '45–50 мин',
     items: [
       { exerciseId: 'rdl', sets: 3, reps: [10, 12], restSec: 90 },
       { exerciseId: 'overhead_press', sets: 3, reps: [8, 10], restSec: 90 },
@@ -42,6 +43,7 @@ export const WORKOUTS: Record<WorkoutId, Workout> = {
         restSec: 45,
         repsFrom: [{ week: 3, reps: [8, 10] }],
       },
+      { exerciseId: 'triceps_ext', sets: 2, reps: [10, 12], restSec: 60 },
     ],
   },
   C: {

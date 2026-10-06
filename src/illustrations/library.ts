@@ -918,6 +918,29 @@ const childsPose: Illustration = {
   ],
 }
 
+
+const tricepsExt: Illustration = {
+  id: 'triceps_ext',
+  view: 'Вид сбоку · лёжа на коврике',
+  timeline: [0.5, 1.8, 0.4, 1.2],
+  props: [FLOOR, { type: 'mat', x0: 70, x1: 262 }],
+  phases: [
+    { label: 'Верх', key: 0 },
+    { label: 'Низ', key: 1 },
+  ],
+  figures: [
+    {
+      rig: 'side',
+      muscles: ['triceps'],
+      trace: { joint: 'handN', from: 0, to: 1 },
+      keys: [
+        supine({ armN: { a: 178, b: 0 }, armF: { a: 176, b: 0 }, dbN: { kind: 'bar' }, dbF: { kind: 'bar' } }),
+        supine({ armN: { a: 172, b: 135 }, armF: { a: 170, b: 135 }, dbN: { kind: 'bar' }, dbF: { kind: 'bar' } }),
+      ],
+    },
+  ],
+}
+
 export const ILLUSTRATIONS: Record<string, Illustration> = Object.fromEntries(
   [
     goblet,
@@ -948,5 +971,6 @@ export const ILLUSTRATIONS: Record<string, Illustration> = Object.fromEntries(
     latStretch,
     supineChin,
     childsPose,
+    tricepsExt,
   ].map((i) => [i.id, i]),
 )
