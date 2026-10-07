@@ -1,0 +1,59 @@
+{
+  "expo": {
+    "name": "Домашняя форма",
+    "slug": "homefit",
+    "version": "2.0.0",
+    "orientation": "portrait",
+    "icon": "./public/icon-512.png",
+    "scheme": "homefit",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0B0D0F",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.homefit.mobile"
+    },
+    "android": {
+      "package": "app.homefit.mobile",
+      "backgroundColor": "#0B0D0F",
+      "adaptiveIcon": {
+        "foregroundImage": "./public/icon-512.png",
+        "backgroundColor": "#0B0D0F"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./public/icon-512.png",
+          "imageWidth": 180,
+          "resizeMode": "contain",
+          "backgroundColor": "#0B0D0F"
+        }
+      ],
+      "expo-font",
+      "expo-status-bar",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "enableBackgroundRecording": false,
+          "enableBackgroundPlayback": false
+        }
+      ],
+      "expo-asset",
+      [
+        "expo-navigation-bar",
+        {
+          "enforceContrast": false,
+          "hidden": false,
+          "style": "dark"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

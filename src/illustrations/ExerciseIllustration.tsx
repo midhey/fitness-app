@@ -1,255 +1,162 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Pause, Play } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { AccessibilityInfo, AppState, Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
+import { useFocusEffect } from 'expo-router'
+import Svg, { Defs, G, Path, RadialGradient, Rect, Stop } from 'react-native-svg'
 import { ILLUSTRATIONS, type FigureSpec, type Illustration, type JointName } from './library'
 import { FrontFigure, PropView, SideFigure } from './draw'
 import { easeInOut, lerpPose, solveFront, solveSide, type V } from './rig'
+import { colors } from '../native/theme'
 
 function samplePose<T>(keys: T[], timeline: number[], time: number): T {
   if (keys.length === 1) return keys[0]
-  const total = timeline.reduce((s, x) => s + x, 0)
-  let t = ((time % total) + total) % total
-  for (let i = 0; i < keys.length; i++) {
-    const hold = timeline[2 * i] ?? 0
-    const move = timeline[2 * i + 1] ?? 1
-    if (t < hold) return keys[i]
-    t -= hold
-    if (t < move) return lerpPose(keys[i], keys[(i + 1) % keys.length], easeInOut(t / move))
-    t -= move
+  const total = timeline.reduce((sum, value) => sum + value, 0)
+  let cursor = ((time % total) + total) % total
+  for (let index = 0; index < keys.length; index++) {
+    const hold = timeline[2 * index] ?? 0
+    const move = timeline[2 * index + 1] ?? 1
+    if (cursor < hold) return keys[index]
+    cursor -= hold
+    if (cursor < move) return lerpPose(keys[index], keys[(index + 1) % keys.length], easeInOut(cursor / move))
+    cursor -= move
   }
   return keys[0]
 }
 
 function keyOffset(timeline: number[], key: number) {
-  let s = 0
-  for (let i = 0; i < key * 2; i++) s += timeline[i] ?? 0
-  return s
+  let value = 0
+  for (let index = 0; index < key * 2; index++) value += timeline[index] ?? 0
+  return value
 }
 
-function jointOf(fig: FigureSpec, pose: unknown, joint: JointName): V {
-  if (fig.rig === 'side') {
-    const sk = solveSide(pose as never)
+function jointOf(figure: FigureSpec, pose: unknown, joint: JointName): V {
+  if (figure.rig === 'side') {
+    const skeleton = solveSide(pose as never)
     switch (joint) {
-      case 'handN':
-        return sk.armN.end
-      case 'handF':
-        return sk.armF.end
-      case 'elbowN':
-        return sk.armN.mid
-      case 'footN':
-        return sk.legN.end
-      case 'footF':
-        return sk.legF.end
-      case 'head':
-        return sk.head
-      case 'P':
-        return sk.P
-      default:
-        return sk.armN.end
+      case 'handN': return skeleton.armN.end
+      case 'handF': return skeleton.armF.end
+      case 'elbowN': return skeleton.armN.mid
+      case 'footN': return skeleton.legN.end
+      case 'footF': return skeleton.legF.end
+      case 'head': return skeleton.head
+      case 'P': return skeleton.P
+      default: return skeleton.armN.end
     }
   }
-  const sk = solveFront(pose as never)
-  return joint === 'handR' ? sk.armR.end : sk.armL.end
+  const skeleton = solveFront(pose as never)
+  return joint === 'handR' ? skeleton.armR.end : skeleton.armL.end
 }
 
-function Trace({ fig }: { fig: FigureSpec }) {
-  const d = useMemo(() => {
-    if (!fig.trace) return null
-    const { joint, from, to } = fig.trace
-    const a = fig.keys[from]
-    const b = fig.keys[to]
-    const pts: V[] = []
-    for (let i = 0; i <= 18; i++) {
-      pts.push(jointOf(fig, lerpPose(a as never, b as never, easeInOut(i / 18)), joint))
-    }
-    const last = pts[pts.length - 1]
-    const prev = pts[pts.length - 3]
-    const dx = last.x - prev.x
-    const dy = last.y - prev.y
-    const l = Math.hypot(dx, dy) || 1
-    const ux = dx / l
-    const uy = dy / l
-    const head = [
-      `${last.x + ux * 5} ${last.y + uy * 5}`,
-      `${last.x - uy * 3.6} ${last.y + ux * 3.6}`,
-      `${last.x + uy * 3.6} ${last.y - ux * 3.6}`,
-    ]
-    return {
-      line: 'M' + pts.map((p) => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join('L'),
-      head: `M${head[0]}L${head[1]}L${head[2]}Z`,
-    }
-  }, [fig])
-  if (!d) return null
-  return (
-    <g opacity={0.75}>
-      <path d={d.line} fill="none" stroke="#5eead4" strokeWidth={1.4} strokeDasharray="2.5 3.5" strokeLinecap="round" />
-      <path d={d.head} fill="#5eead4" />
-    </g>
-  )
+function Trace({ figure }: { figure: FigureSpec }) {
+  const trace = useMemo(() => {
+    if (!figure.trace) return null
+    const { joint, from, to } = figure.trace
+    const points: V[] = []
+    for (let index = 0; index <= 18; index++) points.push(jointOf(figure, lerpPose(figure.keys[from] as never, figure.keys[to] as never, easeInOut(index / 18)), joint))
+    const last = points[points.length - 1]
+    const previous = points[points.length - 3]
+    const dx = last.x - previous.x
+    const dy = last.y - previous.y
+    const length = Math.hypot(dx, dy) || 1
+    const ux = dx / length
+    const uy = dy / length
+    const head = [`${last.x + ux * 5} ${last.y + uy * 5}`, `${last.x - uy * 3.6} ${last.y + ux * 3.6}`, `${last.x + uy * 3.6} ${last.y - ux * 3.6}`]
+    return { line: `M${points.map((point) => `${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join('L')}`, head: `M${head[0]}L${head[1]}L${head[2]}Z` }
+  }, [figure])
+  if (!trace) return null
+  return <G opacity={0.75}><Path d={trace.line} fill="none" stroke="#5eead4" strokeWidth={1.4} strokeDasharray="2.5 3.5" strokeLinecap="round" /><Path d={trace.head} fill="#5eead4" /></G>
 }
 
-function FigureView({ fig, pose }: { fig: FigureSpec; pose: unknown }) {
-  return (
-    <g transform={fig.transform}>
-      {fig.props?.map((p, i) => <PropView key={i} p={p} />)}
-      <Trace fig={fig} />
-      {fig.rig === 'side' ? (
-        <SideFigure sk={solveSide(pose as never)} muscles={fig.muscles} pedals={fig.pedals} nearOnly={fig.nearOnly} />
-      ) : (
-        <FrontFigure sk={solveFront(pose as never)} muscles={fig.muscles} view={fig.view} side={fig.muscleSide} />
-      )}
-      {fig.overlay?.map((p, i) => <PropView key={'o' + i} p={p} />)}
-    </g>
-  )
+function FigureView({ figure, pose }: { figure: FigureSpec; pose: unknown }) {
+  return <G transform={figure.transform}>
+    {figure.props?.map((prop, index) => <PropView key={index} p={prop} />)}
+    <Trace figure={figure} />
+    {figure.rig === 'side'
+      ? <SideFigure sk={solveSide(pose as never)} muscles={figure.muscles} pedals={figure.pedals} nearOnly={figure.nearOnly} />
+      : <FrontFigure sk={solveFront(pose as never)} muscles={figure.muscles} view={figure.view} side={figure.muscleSide} />}
+    {figure.overlay?.map((prop, index) => <PropView key={`overlay-${index}`} p={prop} />)}
+  </G>
 }
 
 function useReducedMotion() {
-  const [r, setR] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia('(prefers-reduced-motion: reduce)').matches : false,
-  )
+  const [reduced, setReduced] = useState(false)
   useEffect(() => {
-    const m = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const h = () => setR(m.matches)
-    m.addEventListener('change', h)
-    return () => m.removeEventListener('change', h)
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduced)
+    const subscription = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduced)
+    return () => subscription.remove()
   }, [])
-  return r
+  return reduced
 }
 
-export function ExerciseIllustration({
-  id,
-  compact = false,
-  className = '',
-}: {
-  id: string
-  compact?: boolean
-  className?: string
-}) {
-  const spec: Illustration | undefined = ILLUSTRATIONS[id]
-  const reduced = useReducedMotion()
-  const [playing, setPlaying] = useState(!reduced)
+function IllustrationSvg({ spec, poses }: { spec: Illustration; poses: unknown[] }) {
+  const gradientId = `exercise-${spec.id}`
+  return <Svg width="100%" height="100%" viewBox="0 0 320 240" accessibilityRole="image" accessibilityLabel={`Схема движения: ${spec.view}`}>
+    <Defs><RadialGradient id={gradientId} cx="50%" cy="38%" rx="75%" ry="75%"><Stop offset="0" stopColor="#1d2227" /><Stop offset="1" stopColor="#15181c" /></RadialGradient></Defs>
+    <Rect width={320} height={240} fill={`url(#${gradientId})`} />
+    {spec.props.map((prop, index) => <PropView key={index} p={prop} />)}
+    {spec.figures.map((figure, index) => <FigureView key={index} figure={figure} pose={poses[index]} />)}
+  </Svg>
+}
+
+export function ExerciseIllustration({ id, compact = false, style }: { id: string; compact?: boolean; style?: ViewStyle }) {
+  const spec = ILLUSTRATIONS[id]
+  const reducedMotion = useReducedMotion()
+  const [playing, setPlaying] = useState(!reducedMotion)
   const [time, setTime] = useState(0)
-  const [visible, setVisible] = useState(true)
-  const ref = useRef<HTMLDivElement>(null)
+  const [active, setActive] = useState(AppState.currentState === 'active')
+  const [focused, setFocused] = useState(true)
 
+  useEffect(() => { setTime(0); setPlaying(!reducedMotion) }, [id, reducedMotion])
+  useEffect(() => { const subscription = AppState.addEventListener('change', (state) => setActive(state === 'active')); return () => subscription.remove() }, [])
+  useFocusEffect(useCallback(() => { setFocused(true); return () => setFocused(false) }, []))
   useEffect(() => {
-    setTime(0)
-    setPlaying(!reduced)
-  }, [id, reduced])
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el || typeof IntersectionObserver === 'undefined') return
-    const io = new IntersectionObserver(([e]) => setVisible(e.isIntersecting), { threshold: 0.05 })
-    io.observe(el)
-    return () => io.disconnect()
-  }, [])
-
-  useEffect(() => {
-    if (!playing || !visible) return
-    let raf = 0
+    if (!playing || !active || !focused || !spec) return
+    let frame = 0
     let last = performance.now()
     const tick = (now: number) => {
-      const dt = Math.min(0.1, (now - last) / 1000)
+      frame = requestAnimationFrame(tick)
+      if (now - last < 33) return
+      const delta = Math.min(.1, (now - last) / 1000)
       last = now
-      if (document.visibilityState === 'visible') setTime((t) => t + dt)
-      raf = requestAnimationFrame(tick)
+      setTime((value) => value + delta)
     }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [playing, visible])
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [playing, active, focused, spec])
 
   if (!spec) return null
+  const poses = spec.figures.map((figure) => samplePose(figure.keys as unknown[], spec.timeline, time))
+  const total = spec.timeline.reduce((sum, value) => sum + value, 0)
+  const cycle = ((time % total) + total) % total
+  const activePhase = !playing ? spec.phases.findIndex((phase) => Math.abs(keyOffset(spec.timeline, phase.key) - cycle) < .02) : -1
+  const jump = (key: number) => { setPlaying(false); setTime(keyOffset(spec.timeline, key) + .001) }
 
-  const poses = spec.figures.map((f) => samplePose(f.keys as unknown[], spec.timeline, time))
-  const total = spec.timeline.reduce((s, x) => s + x, 0)
-  const cycleT = ((time % total) + total) % total
-  const activePhase = !playing
-    ? spec.phases.findIndex((p) => Math.abs(keyOffset(spec.timeline, p.key) - cycleT) < 0.01)
-    : -1
-
-  const jump = (key: number) => {
-    setPlaying(false)
-    setTime(keyOffset(spec.timeline, key) + 0.001)
-  }
-
-  return (
-    <figure className={className}>
-    <div ref={ref} className="relative overflow-hidden rounded-2xl bg-[#15181c] ring-1 ring-white/5">
-      <svg
-        viewBox="0 0 320 240"
-        className="block h-auto w-full"
-        role="img"
-        aria-label={`Схема движения: ${spec.view}`}
-      >
-        <defs>
-          <radialGradient id={`bg-${id}`} cx="50%" cy="38%" r="75%">
-            <stop offset="0%" stopColor="#1d2227" />
-            <stop offset="100%" stopColor="#15181c" />
-          </radialGradient>
-        </defs>
-        <rect width="320" height="240" fill={`url(#bg-${id})`} />
-        {spec.props.map((p, i) => (
-          <PropView key={i} p={p} />
-        ))}
-        {spec.figures.map((f, i) => (
-          <FigureView key={i} fig={f} pose={poses[i]} />
-        ))}
-      </svg>
-
-      <div className="pointer-events-none absolute left-3 top-2.5 flex items-center gap-1.5 text-[11px] font-medium text-white/45">
-        <span className="rounded bg-white/5 px-1.5 py-0.5 uppercase tracking-wide">Схема</span>
-        <span>{spec.view}</span>
-      </div>
-
-      {!compact && (
-        <div className="absolute inset-x-2 bottom-2 flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => setPlaying((p) => !p)}
-            className="grid size-9 place-items-center rounded-full bg-black/45 text-white/85 backdrop-blur active:scale-95"
-            aria-label={playing ? 'Пауза анимации' : 'Запустить анимацию'}
-          >
-            {playing ? <Pause size={16} /> : <Play size={16} className="translate-x-px" />}
-          </button>
-          <div className="flex gap-1 rounded-full bg-black/45 p-0.5 backdrop-blur">
-            {spec.phases.map((p, i) => (
-              <button
-                key={p.label + i}
-                type="button"
-                onClick={() => jump(p.key)}
-                className={`whitespace-nowrap rounded-full px-2.5 py-1.5 text-[11px] font-medium transition-colors ${
-                  activePhase === i ? 'bg-teal-400/90 text-[#0c1413]' : 'text-white/70'
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-          <span className="ml-auto flex items-center gap-1 rounded-full bg-black/45 px-2 py-1 text-[10px] text-white/55 backdrop-blur">
-            <span className="size-2 rounded-full bg-teal-400" /> мышцы
-          </span>
-        </div>
-      )}
-    </div>
-    {spec.note && !compact && <figcaption className="mt-1.5 px-1 text-xs text-mute">{spec.note}</figcaption>}
-    </figure>
-  )
+  return <View style={style}>
+    <View style={[styles.frame, compact && styles.compact]}>
+      <IllustrationSvg spec={spec} poses={poses} />
+      <View pointerEvents="none" style={styles.caption}><Text style={styles.scheme}>СХЕМА</Text><Text style={styles.view}>{spec.view}</Text></View>
+      {!compact ? <View style={styles.controls}>
+        <Pressable onPress={() => setPlaying((value) => !value)} accessibilityLabel={playing ? 'Пауза анимации' : 'Запустить анимацию'} style={styles.play}><Ionicons name={playing ? 'pause' : 'play'} size={16} color={colors.text} /></Pressable>
+        <View style={styles.phases}>{spec.phases.map((phase, index) => <Pressable key={`${phase.label}-${index}`} onPress={() => jump(phase.key)} style={[styles.phase, activePhase === index && styles.phaseActive]}><Text style={[styles.phaseText, activePhase === index && styles.phaseTextActive]}>{phase.label}</Text></Pressable>)}</View>
+        <View style={styles.muscles}><View style={styles.muscleDot} /><Text style={styles.muscleText}>мышцы</Text></View>
+      </View> : null}
+    </View>
+    {spec.note && !compact ? <Text style={styles.note}>{spec.note}</Text> : null}
+  </View>
 }
 
-/** Неподвижный кадр (для миниатюр в списках) */
-export function StaticIllustration({ id, keyIndex, className = '' }: { id: string; keyIndex?: number; className?: string }) {
+export function StaticIllustration({ id, keyIndex, style }: { id: string; keyIndex?: number; style?: ViewStyle }) {
   const spec = ILLUSTRATIONS[id]
   if (!spec) return null
-  const k = keyIndex ?? spec.phases[spec.phases.length - 1]?.key ?? 0
-  return (
-    <svg viewBox="0 0 320 240" className={`block h-auto w-full ${className}`} aria-hidden="true">
-      <rect width="320" height="240" fill="#171a1e" />
-      {spec.props.map((p, i) => (
-        <PropView key={i} p={p} />
-      ))}
-      {spec.figures.map((f, i) => (
-        <FigureView key={i} fig={f} pose={f.keys[Math.min(k, f.keys.length - 1)]} />
-      ))}
-    </svg>
-  )
+  const key = keyIndex ?? spec.phases[spec.phases.length - 1]?.key ?? 0
+  return <View style={[styles.frame, styles.compact, style]}><IllustrationSvg spec={spec} poses={spec.figures.map((figure) => figure.keys[Math.min(key, figure.keys.length - 1)])} /></View>
 }
+
+const styles = StyleSheet.create({
+  frame: { width: '100%', aspectRatio: 4 / 3, borderRadius: 20, overflow: 'hidden', backgroundColor: '#15181c', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
+  compact: { borderRadius: 15 }, caption: { position: 'absolute', left: 11, top: 9, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  scheme: { color: '#FFFFFF80', fontSize: 9, fontWeight: '800', letterSpacing: .7, backgroundColor: '#FFFFFF0D', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 4 }, view: { color: '#FFFFFF73', fontSize: 10, fontWeight: '600' },
+  controls: { position: 'absolute', left: 8, right: 8, bottom: 8, flexDirection: 'row', alignItems: 'center', gap: 6 }, play: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#00000088', alignItems: 'center', justifyContent: 'center' },
+  phases: { flexDirection: 'row', padding: 2, borderRadius: 18, backgroundColor: '#00000088' }, phase: { paddingHorizontal: 9, paddingVertical: 7, borderRadius: 15 }, phaseActive: { backgroundColor: '#5eead4' }, phaseText: { color: '#FFFFFFB8', fontSize: 10, fontWeight: '700' }, phaseTextActive: { color: '#0c1413' },
+  muscles: { marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 14, backgroundColor: '#00000088', paddingHorizontal: 8, paddingVertical: 6 }, muscleDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#2dd4bf' }, muscleText: { color: '#FFFFFF8C', fontSize: 9 }, note: { color: colors.mute, fontSize: 12, marginTop: 6, marginHorizontal: 4 },
+})

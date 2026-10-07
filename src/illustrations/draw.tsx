@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Circle, Ellipse, G, Line, Path, Rect, Text as SvgText } from 'react-native-svg'
 import type { MuscleId } from '../types'
 import {
   add,
@@ -212,7 +213,7 @@ function legParts(leg: LimbSolved, foot: { heel: V; toe: V } | null, color: stri
 
 function renderParts(parts: Part[]) {
   return parts.map((p) => (
-    <path
+    <Path
       key={p.key}
       d={p.d}
       fill={p.fill}
@@ -220,14 +221,14 @@ function renderParts(parts: Part[]) {
       stroke={COLORS.outline}
       strokeWidth={2.2}
       strokeLinejoin="round"
-      paintOrder="stroke"
+
     />
   ))
 }
 
 function renderMuscles(parts: Part[], k = 1) {
   if (k <= 0.01) return null
-  return parts.map((p) => <path key={p.key} d={p.d} fill={p.fill} opacity={0.92 * k} />)
+  return parts.map((p) => <Path key={p.key} d={p.d} fill={p.fill} opacity={0.92 * k} />)
 }
 
 export function Dumbbell({ db, far }: { db: SolvedDb; far?: boolean }) {
@@ -235,31 +236,31 @@ export function Dumbbell({ db, far }: { db: SolvedDb; far?: boolean }) {
   if (db.kind === 'barbell') {
     // Штанга, видимая с торца: ближний блин крупнее гантельного, с втулкой
     return (
-      <g>
-        <circle cx={db.pos.x} cy={db.pos.y} r={10} fill={plate} stroke={COLORS.outline} strokeWidth={2} paintOrder="stroke" />
-        <circle cx={db.pos.x} cy={db.pos.y} r={7} fill="none" stroke={COLORS.metalDark} strokeWidth={1} opacity={0.55} />
-        <circle cx={db.pos.x} cy={db.pos.y} r={3.4} fill={COLORS.metalDark} />
-        <circle cx={db.pos.x} cy={db.pos.y} r={1.4} fill={COLORS.metal} />
-      </g>
+      <G>
+        <Circle cx={db.pos.x} cy={db.pos.y} r={10} fill={plate} stroke={COLORS.outline} strokeWidth={2} />
+        <Circle cx={db.pos.x} cy={db.pos.y} r={7} fill="none" stroke={COLORS.metalDark} strokeWidth={1} opacity={0.55} />
+        <Circle cx={db.pos.x} cy={db.pos.y} r={3.4} fill={COLORS.metalDark} />
+        <Circle cx={db.pos.x} cy={db.pos.y} r={1.4} fill={COLORS.metal} />
+      </G>
     )
   }
   if (db.kind === 'end') {
     return (
-      <g>
-        <circle cx={db.pos.x} cy={db.pos.y} r={7.6} fill={plate} stroke={COLORS.outline} strokeWidth={2} paintOrder="stroke" />
-        <circle cx={db.pos.x} cy={db.pos.y} r={4.8} fill="none" stroke={COLORS.metalDark} strokeWidth={1} opacity={0.6} />
-        <circle cx={db.pos.x} cy={db.pos.y} r={2} fill={COLORS.metalDark} />
-      </g>
+      <G>
+        <Circle cx={db.pos.x} cy={db.pos.y} r={7.6} fill={plate} stroke={COLORS.outline} strokeWidth={2} />
+        <Circle cx={db.pos.x} cy={db.pos.y} r={4.8} fill="none" stroke={COLORS.metalDark} strokeWidth={1} opacity={0.6} />
+        <Circle cx={db.pos.x} cy={db.pos.y} r={2} fill={COLORS.metalDark} />
+      </G>
     )
   }
   const a = dir(db.angle)
   const svgAngle = (Math.atan2(a.y, a.x) * 180) / Math.PI
   return (
-    <g transform={`translate(${f1(db.pos.x)} ${f1(db.pos.y)}) rotate(${f1(svgAngle)})`}>
-      <rect x={-11} y={-1.6} width={22} height={3.2} rx={1.2} fill={COLORS.metalDark} />
-      <rect x={-13.5} y={-7.5} width={5} height={15} rx={1.6} fill={plate} stroke={COLORS.outline} strokeWidth={1.6} paintOrder="stroke" />
-      <rect x={8.5} y={-7.5} width={5} height={15} rx={1.6} fill={plate} stroke={COLORS.outline} strokeWidth={1.6} paintOrder="stroke" />
-    </g>
+    <G transform={`translate(${f1(db.pos.x)} ${f1(db.pos.y)}) rotate(${f1(svgAngle)})`}>
+      <Rect x={-11} y={-1.6} width={22} height={3.2} rx={1.2} fill={COLORS.metalDark} />
+      <Rect x={-13.5} y={-7.5} width={5} height={15} rx={1.6} fill={plate} stroke={COLORS.outline} strokeWidth={1.6} />
+      <Rect x={8.5} y={-7.5} width={5} height={15} rx={1.6} fill={plate} stroke={COLORS.outline} strokeWidth={1.6} />
+    </G>
   )
 }
 
@@ -357,12 +358,12 @@ export function SideFigure({
       {sk.dbF && sk.dbF.kind !== 'bar' && <Dumbbell db={sk.dbF} far />}
       {renderParts([neckPart])}
       {renderMuscles(neckMuscle, sk.hl)}
-      <path d={torso} fill={COLORS.body} stroke={COLORS.outline} strokeWidth={2.2} paintOrder="stroke" />
+      <Path d={torso} fill={COLORS.body} stroke={COLORS.outline} strokeWidth={2.2} />
       {renderMuscles(bands, sk.hl)}
-      <circle cx={sk.head.x} cy={sk.head.y} r={L.head} fill={COLORS.body} stroke={COLORS.outline} strokeWidth={2.2} paintOrder="stroke" />
-      <path d={`M${pt(nose[0])}L${pt(nose[1])}L${pt(nose[2])}Z`} fill={COLORS.body} stroke={COLORS.body} strokeWidth={1.4} strokeLinejoin="round" />
-      <circle cx={eye.x} cy={eye.y} r={1.3} fill={COLORS.outline} />
-      <ellipse cx={ear.x} cy={ear.y} rx={2.1} ry={2.8} fill="none" stroke="#5f6a76" strokeWidth={1.3} />
+      <Circle cx={sk.head.x} cy={sk.head.y} r={L.head} fill={COLORS.body} stroke={COLORS.outline} strokeWidth={2.2} />
+      <Path d={`M${pt(nose[0])}L${pt(nose[1])}L${pt(nose[2])}Z`} fill={COLORS.body} stroke={COLORS.body} strokeWidth={1.4} strokeLinejoin="round" />
+      <Circle cx={eye.x} cy={eye.y} r={1.3} fill={COLORS.outline} />
+      <Ellipse cx={ear.x} cy={ear.y} rx={2.1} ry={2.8} fill="none" stroke="#5f6a76" strokeWidth={1.3} />
       {pedals && <Pedal foot={sk.footN} />}
       {renderParts(nearParts)}
       {renderMuscles(nearLegMuscles, sk.hl)}
@@ -372,7 +373,7 @@ export function SideFigure({
       {sk.dbN && sk.dbN.kind !== 'bar' && <Dumbbell db={sk.dbN} />}
     </>
   )
-  return <g>{content}</g>
+  return <G>{content}</G>
 }
 
 function limbMuscleNeck(base: V, head: V, face: V): Part {
@@ -397,10 +398,10 @@ function Pedal({ foot, far }: { foot: { heel: V; toe: V }; far?: boolean }) {
   const mid = lerpV(foot.heel, foot.toe, 0.5)
   const y = Math.max(foot.heel.y, foot.toe.y) + 4.5
   return (
-    <g>
-      <line x1={mid.x - 4} y1={y + 2} x2={mid.x - 12} y2={212} stroke={far ? '#333a43' : '#434c56'} strokeWidth={3} strokeLinecap="round" />
-      <rect x={mid.x - 13} y={y - 1} width={28} height={5} rx={2} fill={far ? '#3a424c' : '#56606b'} stroke={COLORS.outline} strokeWidth={1.5} paintOrder="stroke" />
-    </g>
+    <G>
+      <Line x1={mid.x - 4} y1={y + 2} x2={mid.x - 12} y2={212} stroke={far ? '#333a43' : '#434c56'} strokeWidth={3} strokeLinecap="round" />
+      <Rect x={mid.x - 13} y={y - 1} width={28} height={5} rx={2} fill={far ? '#3a424c' : '#56606b'} stroke={COLORS.outline} strokeWidth={1.5} />
+    </G>
   )
 }
 
@@ -453,9 +454,9 @@ export function FrontFigure({
 
   const tm: ReactNode[] = []
   const E = (key: string, cx: number, cy: number, rx: number, ry: number, rot = 0) =>
-    tm.push(<ellipse key={key} cx={cx} cy={cy} rx={rx} ry={ry} fill={COLORS.muscle} opacity={0.92 * hlK} transform={rot ? `rotate(${rot} ${cx} ${cy})` : undefined} />)
+    tm.push(<Ellipse key={key} cx={cx} cy={cy} rx={rx} ry={ry} fill={COLORS.muscle} opacity={0.92 * hlK} transform={rot ? `rotate(${rot} ${cx} ${cy})` : undefined} />)
   const Cp = (key: string, A: V, B: V, r1: number, r2: number) =>
-    tm.push(<path key={key} d={capsule(A, B, r1, r2)} fill={COLORS.muscle} opacity={0.92 * hlK} />)
+    tm.push(<Path key={key} d={capsule(A, B, r1, r2)} fill={COLORS.muscle} opacity={0.92 * hlK} />)
 
   if (back) {
     if (m.has('upperBack')) {
@@ -516,34 +517,34 @@ export function FrontFigure({
       ? [sk.legL, sk.legR].map((l, i) => {
           const d = norm(sub(l.end, l.mid))
           const tip = add(l.end, mul(d, 7))
-          return <path key={'ft' + i} d={capsule(l.end, tip, 4, 3.2)} fill={COLORS.body} stroke={COLORS.outline} strokeWidth={2} paintOrder="stroke" />
+          return <Path key={'ft' + i} d={capsule(l.end, tip, 4, 3.2)} fill={COLORS.body} stroke={COLORS.outline} strokeWidth={2} />
         })
       : [sk.legL, sk.legR].map((l, i) => {
           const s = i === 0 ? -1 : 1
-          return <ellipse key={'ft' + i} cx={l.end.x + s * 3} cy={l.end.y + 3} rx={7} ry={3.8} fill={COLORS.body} stroke={COLORS.outline} strokeWidth={2} paintOrder="stroke" />
+          return <Ellipse key={'ft' + i} cx={l.end.x + s * 3} cy={l.end.y + 3} rx={7} ry={3.8} fill={COLORS.body} stroke={COLORS.outline} strokeWidth={2} />
         })
 
   const shadow = (arm: LimbSolved, lift: number, k: string) =>
     lift > 0.02 ? (
-      <g key={k} transform={`translate(${f1(lift * 5)} ${f1(-lift * 5)})`} opacity={0.4 * lift}>
+      <G key={k} transform={`translate(${f1(lift * 5)} ${f1(-lift * 5)})`} opacity={0.4 * lift}>
         {armParts(arm, '#000', k).map((p) => (
-          <path key={p.key} d={p.d} fill="#05070a" />
+          <Path key={p.key} d={p.d} fill="#05070a" />
         ))}
-      </g>
+      </G>
     ) : null
 
   const headEl = (
-    <g>
-      <path d={capsule(v(x, sy + 2), sk.head, R.neck, R.neck)} fill={COLORS.body} stroke={COLORS.outline} strokeWidth={2.2} paintOrder="stroke" />
-      <circle cx={sk.head.x} cy={sk.head.y} r={L.head} fill={COLORS.body} stroke={COLORS.outline} strokeWidth={2.2} paintOrder="stroke" />
+    <G>
+      <Path d={capsule(v(x, sy + 2), sk.head, R.neck, R.neck)} fill={COLORS.body} stroke={COLORS.outline} strokeWidth={2.2} />
+      <Circle cx={sk.head.x} cy={sk.head.y} r={L.head} fill={COLORS.body} stroke={COLORS.outline} strokeWidth={2.2} />
       {back && (
-        <path
+        <Path
           d={`M${f1(sk.head.x - L.head + 0.6)} ${f1(sk.head.y + 1)}A${L.head - 0.6} ${L.head - 0.6} 0 0 1 ${f1(sk.head.x + L.head - 0.6)} ${f1(sk.head.y + 1)}Q${f1(sk.head.x)} ${f1(sk.head.y - 2)} ${f1(sk.head.x - L.head + 0.6)} ${f1(sk.head.y + 1)}Z`}
           fill="#5a6470"
         />
       )}
-      {!back && m.has('neckFlexors') && <path d={capsule(v(x, sy + 1), v(x, sk.head.y + 8), 2.4, 2)} fill={COLORS.muscle} />}
-    </g>
+      {!back && m.has('neckFlexors') && <Path d={capsule(v(x, sy + 1), v(x, sk.head.y + 8), 2.4, 2)} fill={COLORS.muscle} />}
+    </G>
   )
 
   // Голова рисуется до корпуса, если фигура наклонена (смотрим сзади — голова за спиной)
@@ -553,30 +554,30 @@ export function FrontFigure({
   const scaleT = Math.abs(sk.s - 1) > 0.001 ? `translate(${f1(x)} ${FLOOR_Y}) scale(${sk.s.toFixed(3)}) translate(${f1(-x)} ${-FLOOR_Y})` : undefined
 
   return (
-    <g transform={scaleT}>
+    <G transform={scaleT}>
       {shadow(sk.armL, liftL, 'shL')}
       {shadow(sk.armR, liftR, 'shR')}
       {headBehind && headEl}
       {renderParts(legsP)}
       {feet}
       {renderMuscles([...(onL ? legM(sk.legL, 'mll') : []), ...(onR ? legM(sk.legR, 'mlr') : [])], hlK)}
-      <path d={torso} fill={COLORS.body} stroke={COLORS.outline} strokeWidth={2.2} paintOrder="stroke" />
-      {back && <line x1={x} y1={sy + 4} x2={x} y2={c.y - 2} stroke="#6d7783" strokeWidth={1} opacity={0.6} />}
+      <Path d={torso} fill={COLORS.body} stroke={COLORS.outline} strokeWidth={2.2} />
+      {back && <Line x1={x} y1={sy + 4} x2={x} y2={c.y - 2} stroke="#6d7783" strokeWidth={1} opacity={0.6} />}
       {tm}
       {!headBehind && headEl}
       {sk.dbL && sk.dbL.kind === 'bar' && <Dumbbell db={sk.dbL} />}
       {sk.dbR && sk.dbR.kind === 'bar' && <Dumbbell db={sk.dbR} />}
-      <g transform={liftL > 0.02 ? `translate(${f1(-liftL * 1.2)} ${f1(liftL * 1.2)})` : undefined}>
+      <G transform={liftL > 0.02 ? `translate(${f1(-liftL * 1.2)} ${f1(liftL * 1.2)})` : undefined}>
         {renderParts(parts(sk.armL, 'aL'))}
         {onL && renderMuscles(armM(sk.armL, 'maL'), hlK)}
-      </g>
-      <g transform={liftR > 0.02 ? `translate(${f1(-liftR * 1.2)} ${f1(liftR * 1.2)})` : undefined}>
+      </G>
+      <G transform={liftR > 0.02 ? `translate(${f1(-liftR * 1.2)} ${f1(liftR * 1.2)})` : undefined}>
         {renderParts(parts(sk.armR, 'aR'))}
         {onR && renderMuscles(armM(sk.armR, 'maR'), hlK)}
-      </g>
+      </G>
       {sk.dbL && sk.dbL.kind === 'end' && <Dumbbell db={sk.dbL} />}
       {sk.dbR && sk.dbR.kind === 'end' && <Dumbbell db={sk.dbR} />}
-    </g>
+    </G>
   )
 }
 
@@ -609,84 +610,83 @@ export function PropView({ p }: { p: Prop }) {
     case 'floor': {
       const y = p.y ?? FLOOR_Y
       return (
-        <g>
-          <rect x={0} y={y} width={320} height={240 - y} fill="#1a1e23" />
-          <line x1={0} y1={y} x2={320} y2={y} stroke={COLORS.propLine} strokeWidth={1.5} />
-        </g>
+        <G>
+          <Rect x={0} y={y} width={320} height={240 - y} fill="#1a1e23" />
+          <Line x1={0} y1={y} x2={320} y2={y} stroke={COLORS.propLine} strokeWidth={1.5} />
+        </G>
       )
     }
     case 'mat': {
       const y = p.y ?? FLOOR_Y
-      return <rect x={p.x0} y={y - 4} width={p.x1 - p.x0} height={5} rx={2} fill={COLORS.matTop} />
+      return <Rect x={p.x0} y={y - 4} width={p.x1 - p.x0} height={5} rx={2} fill={COLORS.matTop} />
     }
     case 'matTop':
-      return <rect x={p.x} y={p.y} width={p.w} height={p.h} rx={10} fill={COLORS.mat} stroke={COLORS.matTop} strokeWidth={1.5} />
+      return <Rect x={p.x} y={p.y} width={p.w} height={p.h} rx={10} fill={COLORS.mat} stroke={COLORS.matTop} strokeWidth={1.5} />
     case 'wall':
       return (
-        <g>
-          <rect x={p.x} y={0} width={320 - p.x} height={FLOOR_Y} fill="#20252b" />
-          <line x1={p.x} y1={0} x2={p.x} y2={FLOOR_Y} stroke={COLORS.propLine} strokeWidth={1.5} />
-        </g>
+        <G>
+          <Rect x={p.x} y={0} width={320 - p.x} height={FLOOR_Y} fill="#20252b" />
+          <Line x1={p.x} y1={0} x2={p.x} y2={FLOOR_Y} stroke={COLORS.propLine} strokeWidth={1.5} />
+        </G>
       )
     case 'wallBack':
       return (
-        <g>
-          <rect x={p.x0} y={p.y0} width={p.x1 - p.x0} height={FLOOR_Y - p.y0} rx={6} fill="#1e2328" />
-          <rect x={p.x0} y={FLOOR_Y - 8} width={p.x1 - p.x0} height={8} fill="#242a31" />
-        </g>
+        <G>
+          <Rect x={p.x0} y={p.y0} width={p.x1 - p.x0} height={FLOOR_Y - p.y0} rx={6} fill="#1e2328" />
+          <Rect x={p.x0} y={FLOOR_Y - 8} width={p.x1 - p.x0} height={8} fill="#242a31" />
+        </G>
       )
     case 'post': {
       const w = p.w ?? 9
       return (
-        <g>
-          <rect x={p.x - w / 2} y={p.y0 ?? 18} width={w} height={FLOOR_Y - (p.y0 ?? 18)} rx={2} fill="#2c333b" stroke={COLORS.propLine} strokeWidth={1} />
-        </g>
+        <G>
+          <Rect x={p.x - w / 2} y={p.y0 ?? 18} width={w} height={FLOOR_Y - (p.y0 ?? 18)} rx={2} fill="#2c333b" stroke={COLORS.propLine} strokeWidth={1} />
+        </G>
       )
     }
     case 'chair':
       return (
-        <g>
-          <rect x={p.x} y={p.y} width={p.w} height={6} rx={2} fill="#3a424c" />
-          <rect x={p.x + 3} y={p.y + 6} width={4} height={FLOOR_Y - p.y - 6} fill="#30373f" />
-          <rect x={p.x + p.w - 7} y={p.y + 6} width={4} height={FLOOR_Y - p.y - 6} fill="#30373f" />
-        </g>
+        <G>
+          <Rect x={p.x} y={p.y} width={p.w} height={6} rx={2} fill="#3a424c" />
+          <Rect x={p.x + 3} y={p.y + 6} width={4} height={FLOOR_Y - p.y - 6} fill="#30373f" />
+          <Rect x={p.x + p.w - 7} y={p.y + 6} width={4} height={FLOOR_Y - p.y - 6} fill="#30373f" />
+        </G>
       )
     case 'towel':
-      return <rect x={p.x} y={p.y} width={p.w} height={p.h} rx={4} fill="#3b3f52" opacity={0.9} />
+      return <Rect x={p.x} y={p.y} width={p.w} height={p.h} rx={4} fill="#3b3f52" opacity={0.9} />
     case 'plumb':
-      return <line x1={p.x} y1={p.y0} x2={p.x} y2={p.y1} stroke="#5eead4" strokeWidth={1.1} strokeDasharray="3 3" opacity={0.85} />
+      return <Line x1={p.x} y1={p.y0} x2={p.x} y2={p.y1} stroke="#5eead4" strokeWidth={1.1} strokeDasharray="3 3" opacity={0.85} />
     case 'doorFront': {
       const t = 12
       return (
-        <g>
-          <rect x={6} y={8} width={308} height={FLOOR_Y - 8} rx={8} fill="#1d2227" />
-          <rect x={p.x0} y={p.top} width={p.x1 - p.x0} height={FLOOR_Y - p.top} fill="#0f1215" />
-          <rect x={p.x0 - t} y={p.top - t} width={p.x1 - p.x0 + 2 * t} height={t} rx={2} fill="#30373f" />
-          <rect x={p.x0 - t} y={p.top - t} width={t} height={FLOOR_Y - p.top + t} rx={2} fill="#30373f" />
-          <rect x={p.x1} y={p.top - t} width={t} height={FLOOR_Y - p.top + t} rx={2} fill="#30373f" />
-        </g>
+        <G>
+          <Rect x={6} y={8} width={308} height={FLOOR_Y - 8} rx={8} fill="#1d2227" />
+          <Rect x={p.x0} y={p.top} width={p.x1 - p.x0} height={FLOOR_Y - p.top} fill="#0f1215" />
+          <Rect x={p.x0 - t} y={p.top - t} width={p.x1 - p.x0 + 2 * t} height={t} rx={2} fill="#30373f" />
+          <Rect x={p.x0 - t} y={p.top - t} width={t} height={FLOOR_Y - p.top + t} rx={2} fill="#30373f" />
+          <Rect x={p.x1} y={p.top - t} width={t} height={FLOOR_Y - p.top + t} rx={2} fill="#30373f" />
+        </G>
       )
     }
     case 'panel':
-      return <rect x={p.x} y={p.y} width={p.w} height={p.h} rx={10} fill="#14171b" stroke="#2a3037" strokeWidth={1} />
+      return <Rect x={p.x} y={p.y} width={p.w} height={p.h} rx={10} fill="#14171b" stroke="#2a3037" strokeWidth={1} />
     case 'roll':
       return (
-        <g>
-          <circle cx={p.x} cy={p.y} r={p.r} fill="#4a4f66" />
-          <circle cx={p.x} cy={p.y} r={p.r * 0.55} fill="none" stroke="#2f3346" strokeWidth={0.8} />
-        </g>
+        <G>
+          <Circle cx={p.x} cy={p.y} r={p.r} fill="#4a4f66" />
+          <Circle cx={p.x} cy={p.y} r={p.r * 0.55} fill="none" stroke="#2f3346" strokeWidth={0.8} />
+        </G>
       )
     case 'hline':
-      return <line x1={p.x0} y1={p.y} x2={p.x1} y2={p.y} stroke={COLORS.propLine} strokeWidth={2} />
+      return <Line x1={p.x0} y1={p.y} x2={p.x1} y2={p.y} stroke={COLORS.propLine} strokeWidth={2} />
     case 'stepperBase':
-      return <rect x={p.x} y={FLOOR_Y - 7} width={p.w} height={7} rx={3} fill="#2f363e" />
+      return <Rect x={p.x} y={FLOOR_Y - 7} width={p.w} height={7} rx={3} fill="#2f363e" />
     case 'label':
       return (
-        <text x={p.x} y={p.y} fill="#8a949f" fontSize={10} textAnchor={p.anchor ?? 'start'} fontFamily="inherit">
+        <SvgText x={p.x} y={p.y} fill="#8a949f" fontSize={10} textAnchor={p.anchor ?? 'start'} fontFamily="inherit">
           {p.text}
-        </text>
+        </SvgText>
       )
   }
 }
-
 
