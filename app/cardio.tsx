@@ -1,45 +1,187 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Alert, StyleSheet, Text, View } from 'react-native'
 import { router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
-import * as Haptics from 'expo-haptics'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import type { Feeling } from '@/src/types'
 import { actions, useStore } from '@/src/store/store'
 import { programWeek } from '@/src/store/selectors'
-import { todayISO } from '@/src/lib/date'
+import { fmtClock, todayISO } from '@/src/lib/date'
 import { CARDIO_RULES, STEPPER_TECHNIQUE, weekPlan } from '@/src/data/program'
 import { ExerciseIllustration } from '@/src/illustrations/ExerciseIllustration'
-import { Button, Card, Header, ProgressBar, Screen, Section, layout, text } from '@/src/native/ui'
-import { colors } from '@/src/native/theme'
-import { signal } from '@/src/native/feedback'
+import { Banner, Bullet, Button, Collapsible, Header, IconButton, Ring, Screen, Segmented, SectionTitle, Txt } from '@/src/native/ui'
+import { colors, fonts } from '@/src/native/theme'
+import { signal, success, useScreenAwake } from '@/src/native/feedback'
 
-const format = (seconds: number) => `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`
 const TIMER_KEY = 'homefit.cardioTimer'
+/** Таймер, который идёт дольше, скорее всего забыли остановить */
+const STALE_SEC = 3 * 3600
+
+/** Время хранится как накопленное + момент старта: запись только при старте, паузе и сбросе */
+interface TimerState {
+  accumulated: number
+  startedAt: number | null
+}
+
+function parseTimer(raw: string | null): TimerState {
+  if (!raw) return { accumulated: 0, startedAt: null }
+  const saved = JSON.parse(raw) as Partial<TimerState> & { elapsed?: number; running?: boolean; savedAt?: number }
+  // Формат до 2.1: { elapsed, running, savedAt }
+  if (saved.elapsed != null) return { accumulated: saved.elapsed, startedAt: saved.running ? (saved.savedAt ?? Date.now()) : null }
+  return { accumulated: saved.accumulated ?? 0, startedAt: saved.startedAt ?? null }
+}
+
+const elapsedOf = (t: TimerState, now: number) => t.accumulated + (t.startedAt ? Math.max(0, (now - t.startedAt) / 1000) : 0)
+
 export default function CardioScreen() {
+  useScreenAwake()
   const profile = useStore((s) => s.profile)
   const week = programWeek(profile, todayISO())
   const target = weekPlan(week).cardioMin * 60
-  const [elapsed, setElapsed] = useState(0)
-  const [running, setRunning] = useState(false)
-  const [feeling, setFeeling] = useState<Feeling>('ok')
-  const [loaded, setLoaded] = useState(false)
-  const startedAt = useRef(0)
-  const base = useRef(0)
-  const targetSignaled = useRef(false)
-  useEffect(() => { AsyncStorage.getItem(TIMER_KEY).then((raw) => { if (!raw) return; const saved = JSON.parse(raw) as { elapsed: number; running: boolean; savedAt: number }; const restored = saved.elapsed + (saved.running ? Math.max(0, Math.floor((Date.now() - saved.savedAt) / 1000)) : 0); base.current = restored; setElapsed(restored); setRunning(saved.running) }).catch(() => {}).finally(() => setLoaded(true)) }, [])
-  useEffect(() => { if (!running) return; startedAt.current = Date.now(); const timer = setInterval(() => setElapsed(base.current + Math.floor((Date.now() - startedAt.current) / 1000)), 1000); return () => clearInterval(timer) }, [running])
-  useEffect(() => { if (!loaded) return; AsyncStorage.setItem(TIMER_KEY, JSON.stringify({ elapsed, running, savedAt: Date.now() })).catch(() => {}) }, [elapsed, running, loaded])
-  useEffect(() => { if (elapsed >= target && !targetSignaled.current) { targetSignaled.current = true; signal('done') } }, [elapsed, target])
-  const toggle = () => { if (running) base.current = elapsed; setRunning(!running); Haptics.selectionAsync() }
-  const finish = () => Alert.alert('Сохранить кардио?', `${Math.max(1, Math.round(elapsed / 60))} мин`, [{ text: 'Отмена' }, { text: 'Сохранить', onPress: () => { actions.addCardio({ date: todayISO(), week, minutes: Math.max(1, Math.round(elapsed / 60)), targetMin: target / 60, feeling, finishedAt: Date.now() }); AsyncStorage.removeItem(TIMER_KEY); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); router.back() } }])
-  return <Screen>
-    <Header title="Кардио" subtitle={`Неделя ${week} · степпер`} />
-    <ExerciseIllustration id="stepper" />
-    <Card style={styles.timer}><Text style={styles.time}>{format(elapsed)}</Text><Text style={text.soft}>цель {target / 60} минут · разговорный темп</Text><View style={{ width: '100%', marginTop: 20 }}><ProgressBar value={elapsed / target} color={colors.cardio} /></View><View style={styles.timerButtons}><Button title={running ? 'Пауза' : elapsed ? 'Продолжить' : 'Старт'} onPress={toggle} tone="secondary" icon={<Ionicons name={running ? 'pause' : 'play'} size={20} color={colors.text} />} /><Button title="Завершить" onPress={finish} disabled={elapsed < 30} /></View></Card>
-    <Section>Ощущения</Section><View style={styles.feelings}>{([['easy','Легко'],['ok','Умеренно'],['hard','Тяжело']] as [Feeling,string][]).map(([value,label]) => <Button key={value} compact title={label} tone={feeling === value ? 'accent' : 'ghost'} onPress={() => setFeeling(value)} />)}</View>
-    <Section>Техника</Section><Card>{STEPPER_TECHNIQUE.map((item, index) => <View key={index} style={styles.rule}><Ionicons name="checkmark-circle-outline" size={18} color={colors.cardio} /><Text style={[text.soft, { flex: 1 }]}>{item}</Text></View>)}</Card>
-    <Section>Правила</Section><Card>{CARDIO_RULES.map((item, index) => <View key={index} style={styles.rule}><View style={styles.dot} /><Text style={[text.soft, { flex: 1 }]}>{item}</Text></View>)}</Card>
-  </Screen>
+  const [timer, setTimer] = useState<TimerState>({ accumulated: 0, startedAt: null })
+  const [now, setNow] = useState(Date.now())
+  const [feeling, setFeeling] = useState<Feeling | null>(null)
+  const [signaled, setSignaled] = useState(false)
+  const running = timer.startedAt !== null
+  const elapsed = Math.floor(elapsedOf(timer, now))
+
+  useEffect(() => {
+    AsyncStorage.getItem(TIMER_KEY)
+      .then((raw) => {
+        const restored = parseTimer(raw)
+        setTimer(restored)
+        setSignaled(elapsedOf(restored, Date.now()) >= target)
+      })
+      .catch(() => {})
+  }, [target])
+  useEffect(() => {
+    if (!running) return
+    const id = setInterval(() => setNow(Date.now()), 500)
+    return () => clearInterval(id)
+  }, [running])
+  useEffect(() => {
+    if (elapsed >= target && !signaled) {
+      setSignaled(true)
+      signal('done')
+    }
+  }, [elapsed, target, signaled])
+
+  const save = (next: TimerState | null) => {
+    if (next) setTimer(next)
+    ;(next ? AsyncStorage.setItem(TIMER_KEY, JSON.stringify(next)) : AsyncStorage.removeItem(TIMER_KEY)).catch(() => {})
+  }
+  const toggle = () => {
+    const t = Date.now()
+    setNow(t)
+    save(running ? { accumulated: elapsedOf(timer, t), startedAt: null } : { accumulated: timer.accumulated, startedAt: t })
+  }
+  const reset = () =>
+    Alert.alert('Сбросить таймер?', 'Время этого занятия не сохранится.', [
+      { text: 'Отмена', style: 'cancel' },
+      {
+        text: 'Сбросить',
+        style: 'destructive',
+        onPress: () => {
+          save({ accumulated: 0, startedAt: null })
+          setSignaled(false)
+        },
+      },
+    ])
+  const finish = () => {
+    const minutes = Math.max(1, Math.round(elapsed / 60))
+    Alert.alert('Сохранить кардио?', `${minutes} мин на степпере`, [
+      { text: 'Отмена', style: 'cancel' },
+      {
+        text: 'Сохранить',
+        onPress: () => {
+          actions.addCardio({ date: todayISO(), week, minutes, targetMin: target / 60, feeling, finishedAt: Date.now() })
+          save(null)
+          success()
+          router.back()
+        },
+      },
+    ])
+  }
+
+  return (
+    <Screen>
+      <Header title="Кардио" subtitle={`Неделя ${week} · степпер · цель ${target / 60} мин`} onBack={() => router.back()} />
+      {elapsed > STALE_SEC ? (
+        <Banner icon="time-outline" title="Таймер идёт больше трёх часов">
+          Похоже, его забыли остановить. Сбрось таймер, чтобы начать занятие заново.
+        </Banner>
+      ) : null}
+      <View style={styles.timer}>
+        <Ring value={elapsed / target} size={260} stroke={14} color={colors.cardio}>
+          <Text style={styles.time}>{fmtClock(elapsed)}</Text>
+          <Txt v="muted">из {fmtClock(target)}</Txt>
+          {elapsed >= target ? (
+            <Txt v="strong" color={colors.cardio} style={{ marginTop: 6 }}>
+              цель достигнута
+            </Txt>
+          ) : null}
+        </Ring>
+      </View>
+      <View style={styles.controls}>
+        <IconButton icon="refresh" label="Сбросить таймер" size={56} background={colors.elevated} onPress={reset} />
+        <Button
+          title={running ? 'Пауза' : elapsed ? 'Продолжить' : 'Старт'}
+          size="lg"
+          icon={running ? 'pause' : 'play'}
+          color={colors.cardio}
+          tone={running ? 'secondary' : 'accent'}
+          onPress={toggle}
+          style={{ flex: 1 }}
+        />
+        <IconButton
+          icon="checkmark"
+          label="Завершить и сохранить"
+          size={56}
+          background={elapsed >= 30 ? colors.cardio : colors.elevated}
+          color={elapsed >= 30 ? colors.bg : colors.mute}
+          onPress={() => (elapsed >= 30 ? finish() : Alert.alert('Слишком коротко', 'Сохранить можно после 30 секунд.'))}
+        />
+      </View>
+      <Txt v="muted" style={{ textAlign: 'center' }}>
+        Интенсивность 5–6 из 10: дыхание учащённое, но можно говорить фразами
+      </Txt>
+
+      <SectionTitle>Ощущения</SectionTitle>
+      <Segmented<Feeling>
+        options={[
+          { value: 'easy', label: 'Легко' },
+          { value: 'ok', label: 'Умеренно' },
+          { value: 'hard', label: 'Тяжело' },
+        ]}
+        value={feeling}
+        onChange={setFeeling}
+        color={colors.cardio}
+      />
+
+      <Collapsible title="Техника на степпере">
+        <ExerciseIllustration id="stepper" />
+        <View style={{ gap: 10, marginTop: 14 }}>
+          {STEPPER_TECHNIQUE.map((item, index) => (
+            <Bullet key={index} icon="checkmark-circle-outline" color={colors.cardio}>
+              {item}
+            </Bullet>
+          ))}
+        </View>
+      </Collapsible>
+      <Collapsible title="Правила кардио">
+        <View style={{ gap: 10 }}>
+          {CARDIO_RULES.map((item, index) => (
+            <Bullet key={index} color={colors.cardio}>
+              {item}
+            </Bullet>
+          ))}
+        </View>
+      </Collapsible>
+    </Screen>
+  )
 }
-const styles = StyleSheet.create({ timer: { alignItems: 'center', paddingVertical: 28 }, time: { color: colors.text, fontSize: 58, fontWeight: '700', fontVariant: ['tabular-nums'], letterSpacing: -2 }, timerButtons: { flexDirection: 'row', gap: 10, marginTop: 20 }, feelings: { flexDirection: 'row', justifyContent: 'center', backgroundColor: colors.card, padding: 4, borderRadius: 17 }, rule: { flexDirection: 'row', gap: 10, paddingVertical: 7 }, dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.cardio, marginTop: 7 } })
+
+const styles = StyleSheet.create({
+  timer: { alignItems: 'center', paddingVertical: 12 },
+  time: { color: colors.text, fontFamily: fonts.bold, fontSize: 60, letterSpacing: -2, fontVariant: ['tabular-nums'] },
+  controls: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+})

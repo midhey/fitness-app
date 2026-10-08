@@ -1,6 +1,6 @@
 {
   "name": "homefit",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
@@ -9,9 +9,11 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "doctor": "expo-doctor"
+    "doctor": "expo-doctor",
+    "format": "prettier --write \"app/**/*.tsx\" \"src/**/*.{ts,tsx}\""
   },
   "dependencies": {
+    "@expo-google-fonts/onest": "^0.4.2",
     "@expo/vector-icons": "^15.1.1",
     "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~57.0.1",
@@ -21,6 +23,7 @@
     "expo-font": "~57.0.4",
     "expo-haptics": "~57.0.3",
     "expo-keep-awake": "~57.0.2",
+    "expo-linear-gradient": "~57.0.2",
     "expo-linking": "~57.0.12",
     "expo-navigation-bar": "~57.0.3",
     "expo-router": "~57.0.25",
@@ -37,6 +40,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.10",
+    "prettier": "^3.9.9",
     "typescript": "~6.0.3"
   }
 }

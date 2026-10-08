@@ -5,7 +5,8 @@ import { EXERCISES } from '../data/exercises'
 
 /** Неделя программы для даты (может быть > 8 — программа завершена) */
 export function rawWeek(profile: Profile, iso: string): number {
-  return Math.floor(diffDays(iso, profile.programStart) / 7) + 1
+  const week = Math.floor(diffDays(iso, profile.programStart) / 7) + 1
+  return Number.isFinite(week) ? week : 1
 }
 
 export function programWeek(profile: Profile, iso: string): number {
@@ -108,9 +109,7 @@ export function sortByDateDesc<T extends { date: string }>(xs: T[]): T[] {
 export function monthGrid(year: number, month: number): string[] {
   // 6 недель по 7 дней, начиная с понедельника
   const first = new Date(year, month, 1)
-  const startIso = mondayOf(
-    `${first.getFullYear()}-${String(first.getMonth() + 1).padStart(2, '0')}-01`,
-  )
+  const startIso = mondayOf(`${first.getFullYear()}-${String(first.getMonth() + 1).padStart(2, '0')}-01`)
   return Array.from({ length: 42 }, (_, i) => addDays(startIso, i))
 }
 

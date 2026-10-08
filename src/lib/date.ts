@@ -13,6 +13,11 @@ export function parseISO(iso: string): Date {
   return new Date(y, m - 1, d)
 }
 
+/** Строка вида YYYY-MM-DD, задающая существующую дату */
+export function isValidISO(iso: unknown): iso is string {
+  return typeof iso === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(iso) && toISO(parseISO(iso)) === iso
+}
+
 export function addDays(iso: string, n: number): string {
   const d = parseISO(iso)
   d.setDate(d.getDate() + n)
@@ -34,20 +39,7 @@ export function diffDays(a: string, b: string): number {
 
 export const WEEKDAYS_SHORT = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 export const WEEKDAYS_FULL = ['понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье']
-const MONTHS_GEN = [
-  'января',
-  'февраля',
-  'марта',
-  'апреля',
-  'мая',
-  'июня',
-  'июля',
-  'августа',
-  'сентября',
-  'октября',
-  'ноября',
-  'декабря',
-]
+const MONTHS_GEN = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
 const MONTHS_SHORT = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
 export const MONTHS_NOM = [
   'Январь',

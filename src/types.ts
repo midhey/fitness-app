@@ -108,9 +108,18 @@ export type PostureMode =
       sets?: number
       restSec?: number
       setLabels?: string[]
+      /** Подписи сторон для perSide; по умолчанию — «правая рука, левая нога» / наоборот */
+      sideLabels?: [string, string]
     }
   | { type: 'timed'; seconds: number; rounds: number; perSide: boolean }
-  | { type: 'paced'; cycles: number; phases: { label: string; sec: number }[]; perSide?: boolean }
+  | {
+      type: 'paced'
+      cycles: number
+      phases: { label: string; sec: number }[]
+      perSide?: boolean
+      /** Подсказка на смене стороны; по умолчанию — «Другая рука за голову» */
+      switchSub?: string
+    }
 
 export interface PostureExercise {
   id: string
@@ -127,6 +136,8 @@ export interface PostureExercise {
   mode: PostureMode
   /** Иллюстрация — id из библиотеки анимаций */
   illustration: string
+  /** Задача упражнения в комплексе («Мобилизация», «Корпус» …) — для комплекса с ротацией */
+  focus?: string
 }
 
 // ---------- Сохраняемые данные ----------

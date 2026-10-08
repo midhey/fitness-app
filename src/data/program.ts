@@ -107,8 +107,7 @@ export const WEEKS: WeekPlan[] = [
     phase: 'Облегчённая',
     rir: '3–4',
     summary: 'Восстановление',
-    details:
-      'На подход меньше, веса прошлой недели, запас 3–4 повторения. Облегчённая неделя помогает восстановиться и закрепить технику.',
+    details: 'На подход меньше, веса прошлой недели, запас 3–4 повторения. Облегчённая неделя помогает восстановиться и закрепить технику.',
     setsDelta: -1,
     firstExerciseBonus: false,
     cardioMin: 20,
@@ -129,8 +128,7 @@ export const WEEKS: WeekPlan[] = [
     phase: 'Паузы',
     rir: '2',
     summary: 'Паузы в трудной точке',
-    details:
-      'Паузы 1–2 с в самой трудной точке: внизу приседа, у пояса в тягах, вверху мостика. Смотри подсказку в каждом упражнении.',
+    details: 'Паузы 1–2 с в самой трудной точке: внизу приседа, у пояса в тягах, вверху мостика. Смотри подсказку в каждом упражнении.',
     setsDelta: 0,
     firstExerciseBonus: false,
     cardioMin: 25,
@@ -213,7 +211,7 @@ export const SAFETY = [
 // ---------- Вычисления ----------
 
 export function weekPlan(week: number): WeekPlan {
-  const i = Math.min(Math.max(week, 1), TOTAL_WEEKS) - 1
+  const i = Number.isFinite(week) ? Math.min(Math.max(Math.round(week), 1), TOTAL_WEEKS) - 1 : 0
   return WEEKS[i]
 }
 

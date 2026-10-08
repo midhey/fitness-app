@@ -288,10 +288,7 @@ const bridge: Illustration = {
       rig: 'side',
       muscles: ['glutes', 'hamstrings'],
       trace: { joint: 'P', from: 0, to: 1 },
-      keys: [
-        supine({ p: [178, 196], torso: -90 }),
-        supine({ p: [176, 174], torso: -120, neck: 30 }),
-      ],
+      keys: [supine({ p: [178, 196], torso: -90 }), supine({ p: [176, 174], torso: -120, neck: 30 })],
     },
   ],
 }
@@ -513,11 +510,7 @@ const doorway: Illustration = {
       view: 'front',
       muscles: ['chest', 'frontDelts'],
       muscleSide: 'L',
-      keys: [
-        doorFront(),
-        doorFront({ armL: { a: 84, b: 96 }, hl: 0.25 }),
-        doorFront({ armL: { a: 84, b: 96 }, hl: 1, s: 1.05 }),
-      ],
+      keys: [doorFront(), doorFront({ armL: { a: 84, b: 96 }, hl: 0.25 }), doorFront({ armL: { a: 84, b: 96 }, hl: 1, s: 1.05 })],
     },
     {
       rig: 'side',
@@ -691,7 +684,6 @@ const stepper: Illustration = {
   ],
 }
 
-
 // ---------- варианты со штангой ----------
 
 /** Тот же рисунок, но в руках штанга, видимая с торца (обе кисти на одном грифе) */
@@ -741,7 +733,6 @@ const bbBridge: Illustration = {
     },
   ],
 }
-
 
 // ---------- комплекс «Спина и таз» ----------
 
@@ -918,6 +909,275 @@ const childsPose: Illustration = {
   ],
 }
 
+// ---------- ротация «Спина и таз»: дополнительные упражнения ----------
+
+const MAT_SUPINE: Prop = { type: 'mat', x0: 70, x1: 262 }
+
+/** Точка конечности по прямой кинематике (для расчёта захвата руками) */
+const along = (from: Pair, deg: number, length: number): Pair => [
+  from[0] + Math.sin((deg * Math.PI) / 180) * length,
+  from[1] + Math.cos((deg * Math.PI) / 180) * length,
+]
+
+/** Колени у груди: бедро под углом thigh, голень почти горизонтально, кисти на голенях */
+const kneesPose = (thigh: number, lift: number, hl: number): SidePose => {
+  const p: Pair = [182, 196 - lift]
+  const knee = along(p, thigh, 38)
+  const hand = along(knee, 95, 9)
+  return supine({
+    p,
+    torso: -90 + lift,
+    spine: 0,
+    neck: 6,
+    armN: { ik: [hand[0], hand[1] + 3] },
+    armF: { ik: [hand[0] - 2, hand[1] + 3] },
+    legN: { a: thigh, b: thigh + 265 },
+    legF: { a: thigh - 3, b: thigh + 262 },
+    hl,
+  })
+}
+
+const kneesToChest: Illustration = {
+  id: 'knees_to_chest',
+  view: 'Вид сбоку · лёжа на спине',
+  timeline: [0.6, 2.0, 1.6, 2.0],
+  props: [FLOOR, MAT_SUPINE],
+  phases: [
+    { label: 'Колени держишь', key: 0 },
+    { label: 'Мягко к груди', key: 1 },
+  ],
+  note: 'Тянут руки, а не мышцы живота: поясница мягко округляется и ложится на коврик',
+  figures: [{ rig: 'side', muscles: ['erectors', 'glutes'], keys: [kneesPose(-124, 0, 0.35), kneesPose(-160, 4, 1)] }],
+}
+
+const rockPose = (p: Pair, torso: number, thigh: number, hl: number): SidePose =>
+  quad({
+    p,
+    torso,
+    spine: 0,
+    armN: { ik: [190, 204] },
+    armF: { ik: [188, 204] },
+    legN: { a: thigh, b: thigh + 90 },
+    legF: { a: thigh, b: thigh + 90 },
+    hl,
+  })
+
+const quadRock: Illustration = {
+  id: 'quad_rock',
+  view: 'Вид сбоку · на четвереньках',
+  timeline: [0.5, 2.0, 0.8, 1.8],
+  props: [FLOOR, { type: 'mat', x0: 40, x1: 262 }],
+  phases: [
+    { label: 'Четвереньки', key: 0 },
+    { label: 'Таз к пяткам', key: 1 },
+  ],
+  note: 'Спина остаётся ровной: двигается таз, а не поясница',
+  figures: [{ rig: 'side', muscles: ['glutes', 'erectors'], keys: [rockPose([130, 164], 75, 0, 0.35), rockPose([98, 181], 80, 54, 1)] }],
+}
+
+const hamPose = (thigh: number, hl: number): SidePose => {
+  const p: Pair = [182, 196]
+  const hand = along(p, thigh, 30)
+  return supine({
+    p,
+    spine: 0,
+    neck: 4,
+    armN: { ik: [Math.min(hand[0], 172), Math.max(hand[1], 158)] },
+    armF: { ik: [Math.min(hand[0], 172) - 2, Math.max(hand[1], 158)] },
+    legN: { a: thigh, b: 0 },
+    legF: { a: 140, b: 100 },
+    hl,
+  })
+}
+
+const hamstringStretch: Illustration = {
+  id: 'hamstring_stretch',
+  view: 'Вид сбоку · полотенце за стопой',
+  timeline: [0.6, 2.2, 2.4, 1.8],
+  props: [FLOOR, MAT_SUPINE],
+  phases: [
+    { label: 'Нога вверх', key: 0 },
+    { label: 'Растяжение', key: 1 },
+  ],
+  note: 'Колено почти прямое, таз и вторая стопа остаются на полу',
+  figures: [{ rig: 'side', muscles: ['hamstrings', 'calves'], nearOnly: true, keys: [hamPose(146, 0.35), hamPose(166, 1)] }],
+}
+
+/** «Четвёрка»: дальняя нога согнута, лодыжка ближней лежит на её колене */
+const figurePose = (farAnkle: Pair, nearAnkle: Pair, hand: Pair, hl: number): SidePose =>
+  supine({
+    spine: 0,
+    neck: 6,
+    armN: { ik: hand },
+    armF: { ik: [hand[0] - 2, hand[1]] },
+    legN: { ik: nearAnkle, bend: -1 },
+    legF: { ik: farAnkle },
+    footN: 20,
+    hl,
+  })
+
+const figureFour: Illustration = {
+  id: 'figure_four',
+  view: 'Вид сбоку · лодыжка на колене',
+  timeline: [0.6, 2.2, 2.4, 1.8],
+  props: [FLOOR, MAT_SUPINE],
+  phases: [
+    { label: 'Ноги скрещены', key: 0 },
+    { label: 'Бедро к себе', key: 1 },
+  ],
+  note: 'Тянется ягодица той ноги, что лежит сверху; колено мягко уводи от себя',
+  figures: [
+    {
+      rig: 'side',
+      muscles: ['glutes'],
+      keys: [figurePose([224, 203], [206, 172], [172, 178], 0.35), figurePose([212, 180], [190, 161], [170, 168], 1)],
+    },
+  ],
+}
+
+const heelPose = (thigh: number, hl: number): SidePose =>
+  supine({
+    spine: 1,
+    armN: { a: 84, b: 0 },
+    armF: { a: 84, b: 0 },
+    legN: { a: thigh, b: 90 },
+    legF: { a: 180, b: 90 },
+    footN: thigh - 270,
+    footF: -90,
+    hl,
+  })
+
+const heelTaps: Illustration = {
+  id: 'heel_taps',
+  view: 'Вид сбоку · затем другая нога',
+  timeline: [0.6, 1.8, 0.4, 1.6],
+  props: [FLOOR, MAT_SUPINE],
+  phases: [
+    { label: 'Ноги 90/90', key: 0 },
+    { label: 'Пятка к полу', key: 1 },
+  ],
+  note: 'Поясница прижата к коврику всё время — опускай ногу только до этой границы',
+  figures: [{ rig: 'side', muscles: ['core', 'obliques'], nearOnly: true, keys: [heelPose(180, 0.4), heelPose(122, 1)] }],
+}
+
+const plankPose = (p: Pair, torso: number, elbow: Pair, hand: Pair, knee: Pair, ankle: Pair, hl: number): SidePose => ({
+  p,
+  torso,
+  spine: 0,
+  neck: 0,
+  armN: { pt: [elbow[0], elbow[1], hand[0], hand[1]] },
+  armF: { pt: [elbow[0] - 2, elbow[1], hand[0] - 2, hand[1]] },
+  legN: { pt: [knee[0], knee[1], ankle[0], ankle[1]] },
+  legF: { pt: [knee[0] - 2, knee[1], ankle[0] - 2, ankle[1]] },
+  footN: -150,
+  footF: -150,
+  hl,
+})
+
+const kneePlank: Illustration = {
+  id: 'knee_plank',
+  view: 'Вид сбоку · опора на предплечья и колени',
+  timeline: [0.6, 1.8, 2.6, 1.6],
+  props: [FLOOR, { type: 'mat', x0: 40, x1: 262 }],
+  phases: [
+    { label: 'Опора', key: 0 },
+    { label: 'Прямая линия', key: 1 },
+  ],
+  note: 'От затылка до колен — одна линия: живот подтянут, ягодицы напряжены, поясница не провисает',
+  figures: [
+    {
+      rig: 'side',
+      muscles: ['core', 'glutes'],
+      keys: [
+        plankPose([122, 176], 100, [4, 22], [28, 23], [-30, 30], [-64, 23], 0.35),
+        plankPose([126, 189], 80, [0, 25], [24, 26], [-34, 17], [-68, 10], 1),
+      ],
+    },
+  ],
+}
+
+const marchPose = (thigh: number, knee: number, hl: number): SidePose =>
+  supine({
+    p: [176, 174],
+    torso: -120,
+    spine: 0,
+    neck: 30,
+    legN: { a: thigh, b: knee },
+    legF: { a: 128, b: 112 },
+    hl,
+  })
+
+const bridgeMarch: Illustration = {
+  id: 'bridge_march',
+  view: 'Вид сбоку · таз держится высоко',
+  timeline: [0.6, 1.4, 1.2, 1.4],
+  props: [FLOOR, MAT_SUPINE],
+  phases: [
+    { label: 'Мостик', key: 0 },
+    { label: 'Колено вверх', key: 1 },
+  ],
+  note: 'Таз не проседает и не заваливается в сторону, когда стопа отрывается от пола',
+  figures: [{ rig: 'side', muscles: ['glutes', 'hamstrings'], keys: [marchPose(132, 115, 0.6), marchPose(178, 88, 1)] }],
+}
+
+const hingePose = (p: Pair, torso: number, hl: number): SidePose =>
+  stand({
+    p,
+    torso,
+    spine: 0,
+    neck: torso > 20 ? -12 : 0,
+    armN: { pt: [-4, 14, 8, 30] },
+    armF: { pt: [-5, 14, 7, 30] },
+    legN: { ik: [154, 207] },
+    legF: { ik: [148, 207] },
+    hl,
+  })
+
+const hipHinge: Illustration = {
+  id: 'hip_hinge',
+  view: 'Вид сбоку · руки свободно',
+  timeline: [0.5, 2.0, 0.8, 1.6],
+  props: [FLOOR],
+  phases: [
+    { label: 'Стоя', key: 0 },
+    { label: 'Наклон тазом', key: 1 },
+  ],
+  note: 'Таз уходит назад, спина прямая, колени слегка согнуты — так поднимают вещи с пола',
+  figures: [
+    {
+      rig: 'side',
+      muscles: ['glutes', 'hamstrings'],
+      trace: { joint: 'P', from: 0, to: 1 },
+      keys: [hingePose([150, 132], 0, 0.35), hingePose([128, 140], 58, 1)],
+    },
+  ],
+}
+
+const breathPose = (spine: number, hl: number): SidePose =>
+  supine({
+    spine,
+    neck: 0,
+    armN: { pt: [20, -12, 34, -6] },
+    armF: { pt: [19, -12, 33, -6] },
+    legN: { a: 180, b: 90 },
+    legF: { a: 178, b: 92 },
+    footN: -90,
+    footF: -90,
+    hl,
+  })
+
+const breathing9090: Illustration = {
+  id: 'breathing_9090',
+  view: 'Вид сбоку · голени на стуле',
+  timeline: [0.4, 3.2, 0.6, 4.6],
+  props: [FLOOR, MAT_SUPINE, { type: 'chair', x: 200, y: 162, w: 52 }],
+  phases: [
+    { label: 'Вдох', key: 0 },
+    { label: 'Выдох', key: 1 },
+  ],
+  note: 'На выдохе рёбра опускаются, поясница мягко ложится на пол — без усилия ногами',
+  figures: [{ rig: 'side', muscles: ['core'], keys: [breathPose(-4, 0.35), breathPose(2, 1)] }],
+}
 
 const tricepsExt: Illustration = {
   id: 'triceps_ext',
@@ -972,5 +1232,14 @@ export const ILLUSTRATIONS: Record<string, Illustration> = Object.fromEntries(
     supineChin,
     childsPose,
     tricepsExt,
+    kneesToChest,
+    quadRock,
+    hamstringStretch,
+    figureFour,
+    heelTaps,
+    kneePlank,
+    bridgeMarch,
+    hipHinge,
+    breathing9090,
   ].map((i) => [i.id, i]),
 )

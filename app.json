@@ -2,9 +2,9 @@
   "expo": {
     "name": "Домашняя форма",
     "slug": "homefit",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "orientation": "portrait",
-    "icon": "./public/icon-512.png",
+    "icon": "./assets/icon.png",
     "scheme": "homefit",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#0B0D0F",
@@ -16,7 +16,7 @@
       "package": "app.homefit.mobile",
       "backgroundColor": "#0B0D0F",
       "adaptiveIcon": {
-        "foregroundImage": "./public/icon-512.png",
+        "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#0B0D0F"
       }
     },
@@ -25,7 +25,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./public/icon-512.png",
+          "image": "./assets/icon.png",
           "imageWidth": 180,
           "resizeMode": "contain",
           "backgroundColor": "#0B0D0F"

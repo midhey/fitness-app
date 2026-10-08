@@ -213,16 +213,7 @@ function legParts(leg: LimbSolved, foot: { heel: V; toe: V } | null, color: stri
 
 function renderParts(parts: Part[]) {
   return parts.map((p) => (
-    <Path
-      key={p.key}
-      d={p.d}
-      fill={p.fill}
-      opacity={p.opacity}
-      stroke={COLORS.outline}
-      strokeWidth={2.2}
-      strokeLinejoin="round"
-
-    />
+    <Path key={p.key} d={p.d} fill={p.fill} opacity={p.opacity} stroke={COLORS.outline} strokeWidth={2.2} strokeLinejoin="round" />
   ))
 }
 
@@ -299,10 +290,7 @@ export function SideFigure({
   }
 
   const farParts = [...legParts(sk.legF, sk.footF, COLORS.far, 'lf'), ...armParts(sk.armF, COLORS.far, 'af')]
-  const farMuscles = [
-    ...legMuscleParts(sk.legF, leg, COLORS.muscleFar, 'mlf'),
-    ...armMuscleParts(sk.armF, arm, COLORS.muscleFar, 'maf'),
-  ]
+  const farMuscles = [...legMuscleParts(sk.legF, leg, COLORS.muscleFar, 'mlf'), ...armMuscleParts(sk.armF, arm, COLORS.muscleFar, 'maf')]
 
   // корпус
   const torso = torsoPath(sk)
@@ -331,9 +319,7 @@ export function SideFigure({
     fill: COLORS.body,
     key: 'neck',
   }
-  const neckMuscle: Part[] = m.has('neckFlexors')
-    ? [limbMuscleNeck(sk.neckBase, sk.head, sk.faceDir)]
-    : []
+  const neckMuscle: Part[] = m.has('neckFlexors') ? [limbMuscleNeck(sk.neckBase, sk.head, sk.faceDir)] : []
 
   const nearParts = [...legParts(sk.legN, sk.footN, COLORS.near, 'ln')]
   const nearLegMuscles = legMuscleParts(sk.legN, leg, COLORS.muscle, 'mln')
@@ -361,7 +347,13 @@ export function SideFigure({
       <Path d={torso} fill={COLORS.body} stroke={COLORS.outline} strokeWidth={2.2} />
       {renderMuscles(bands, sk.hl)}
       <Circle cx={sk.head.x} cy={sk.head.y} r={L.head} fill={COLORS.body} stroke={COLORS.outline} strokeWidth={2.2} />
-      <Path d={`M${pt(nose[0])}L${pt(nose[1])}L${pt(nose[2])}Z`} fill={COLORS.body} stroke={COLORS.body} strokeWidth={1.4} strokeLinejoin="round" />
+      <Path
+        d={`M${pt(nose[0])}L${pt(nose[1])}L${pt(nose[2])}Z`}
+        fill={COLORS.body}
+        stroke={COLORS.body}
+        strokeWidth={1.4}
+        strokeLinejoin="round"
+      />
       <Circle cx={eye.x} cy={eye.y} r={1.3} fill={COLORS.outline} />
       <Ellipse cx={ear.x} cy={ear.y} rx={2.1} ry={2.8} fill="none" stroke="#5f6a76" strokeWidth={1.3} />
       {pedals && <Pedal foot={sk.footN} />}
@@ -400,7 +392,16 @@ function Pedal({ foot, far }: { foot: { heel: V; toe: V }; far?: boolean }) {
   return (
     <G>
       <Line x1={mid.x - 4} y1={y + 2} x2={mid.x - 12} y2={212} stroke={far ? '#333a43' : '#434c56'} strokeWidth={3} strokeLinecap="round" />
-      <Rect x={mid.x - 13} y={y - 1} width={28} height={5} rx={2} fill={far ? '#3a424c' : '#56606b'} stroke={COLORS.outline} strokeWidth={1.5} />
+      <Rect
+        x={mid.x - 13}
+        y={y - 1}
+        width={28}
+        height={5}
+        rx={2}
+        fill={far ? '#3a424c' : '#56606b'}
+        stroke={COLORS.outline}
+        strokeWidth={1.5}
+      />
     </G>
   )
 }
@@ -447,14 +448,22 @@ export function FrontFigure({
   const torso = smoothClosed(torsoPts)
 
   const parts = (arm: LimbSolved, k: string) => armParts(arm, COLORS.near, k)
-  const legsP = [
-    ...legParts(sk.legL, null, COLORS.body, 'll'),
-    ...legParts(sk.legR, null, COLORS.body, 'lr'),
-  ]
+  const legsP = [...legParts(sk.legL, null, COLORS.body, 'll'), ...legParts(sk.legR, null, COLORS.body, 'lr')]
 
   const tm: ReactNode[] = []
   const E = (key: string, cx: number, cy: number, rx: number, ry: number, rot = 0) =>
-    tm.push(<Ellipse key={key} cx={cx} cy={cy} rx={rx} ry={ry} fill={COLORS.muscle} opacity={0.92 * hlK} transform={rot ? `rotate(${rot} ${cx} ${cy})` : undefined} />)
+    tm.push(
+      <Ellipse
+        key={key}
+        cx={cx}
+        cy={cy}
+        rx={rx}
+        ry={ry}
+        fill={COLORS.muscle}
+        opacity={0.92 * hlK}
+        transform={rot ? `rotate(${rot} ${cx} ${cy})` : undefined}
+      />,
+    )
   const Cp = (key: string, A: V, B: V, r1: number, r2: number) =>
     tm.push(<Path key={key} d={capsule(A, B, r1, r2)} fill={COLORS.muscle} opacity={0.92 * hlK} />)
 
@@ -521,7 +530,18 @@ export function FrontFigure({
         })
       : [sk.legL, sk.legR].map((l, i) => {
           const s = i === 0 ? -1 : 1
-          return <Ellipse key={'ft' + i} cx={l.end.x + s * 3} cy={l.end.y + 3} rx={7} ry={3.8} fill={COLORS.body} stroke={COLORS.outline} strokeWidth={2} />
+          return (
+            <Ellipse
+              key={'ft' + i}
+              cx={l.end.x + s * 3}
+              cy={l.end.y + 3}
+              rx={7}
+              ry={3.8}
+              fill={COLORS.body}
+              stroke={COLORS.outline}
+              strokeWidth={2}
+            />
+          )
         })
 
   const shadow = (arm: LimbSolved, lift: number, k: string) =>
@@ -551,7 +571,8 @@ export function FrontFigure({
   const headBehind = back && lt < L.torso * 0.85
   const liftL = sk.liftL
   const liftR = sk.liftR
-  const scaleT = Math.abs(sk.s - 1) > 0.001 ? `translate(${f1(x)} ${FLOOR_Y}) scale(${sk.s.toFixed(3)}) translate(${f1(-x)} ${-FLOOR_Y})` : undefined
+  const scaleT =
+    Math.abs(sk.s - 1) > 0.001 ? `translate(${f1(x)} ${FLOOR_Y}) scale(${sk.s.toFixed(3)}) translate(${f1(-x)} ${-FLOOR_Y})` : undefined
 
   return (
     <G transform={scaleT}>
@@ -640,7 +661,16 @@ export function PropView({ p }: { p: Prop }) {
       const w = p.w ?? 9
       return (
         <G>
-          <Rect x={p.x - w / 2} y={p.y0 ?? 18} width={w} height={FLOOR_Y - (p.y0 ?? 18)} rx={2} fill="#2c333b" stroke={COLORS.propLine} strokeWidth={1} />
+          <Rect
+            x={p.x - w / 2}
+            y={p.y0 ?? 18}
+            width={w}
+            height={FLOOR_Y - (p.y0 ?? 18)}
+            rx={2}
+            fill="#2c333b"
+            stroke={COLORS.propLine}
+            strokeWidth={1}
+          />
         </G>
       )
     }
@@ -689,4 +719,3 @@ export function PropView({ p }: { p: Prop }) {
       )
   }
 }
-

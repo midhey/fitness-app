@@ -119,15 +119,7 @@ export interface LimbSolved {
  * sign — направление «сгибания» для FK: у руки предплечье поворачивается в ту же сторону (+1),
  * у ноги голень — в обратную (−1). mirror — зеркалит ось X (левая сторона вида спереди).
  */
-function solveLimb(
-  root: V,
-  limb: Limb,
-  l1: number,
-  l2: number,
-  sign: 1 | -1,
-  defaultBend: 1 | -1,
-  mirror = false,
-): LimbSolved {
+function solveLimb(root: V, limb: Limb, l1: number, l2: number, sign: 1 | -1, defaultBend: 1 | -1, mirror = false): LimbSolved {
   const d = (deg: number) => {
     const r = dir(deg)
     return mirror ? v(-r.x, r.y) : r
@@ -215,8 +207,7 @@ export function solveSide(p: SidePose): SideSkeleton {
   const neckBase = add(S, mul(uEnd, L.neckBase))
   const head = add(add(neckBase, mul(headDir, L.neck)), mul(fEnd, p.headX ?? 0))
   const ft = n + (p.tilt ?? 0) * RAD
-  const faceDir =
-    p.face !== undefined ? dir(p.face) : add(mul(fEnd, Math.cos(ft)), mul(uEnd, -Math.sin(ft)))
+  const faceDir = p.face !== undefined ? dir(p.face) : add(mul(fEnd, Math.cos(ft)), mul(uEnd, -Math.sin(ft)))
 
   const armN = solveLimb(S, p.armN, L.upperArm, L.forearm, 1, -1)
   const armF = solveLimb(S, p.armF, L.upperArm, L.forearm, 1, -1)

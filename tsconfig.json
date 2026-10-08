@@ -3,27 +3,8 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"]
     }
   },
-  "include": [
-    "app/**/*.tsx",
-    "src/data/**/*.ts",
-    "src/lib/date.ts",
-    "src/store/**/*.ts",
-    "src/types.ts",
-    "src/native/**/*.tsx",
-    "src/illustrations/**/*.ts",
-    "src/illustrations/**/*.tsx",
-    "expo-env.d.ts",
-    ".expo/types/**/*.ts"
-  ],
-  "exclude": [
-    "src/screens",
-    "src/components",
-    "src/main.tsx",
-    "src/App.tsx"
-  ]
+  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
 }
