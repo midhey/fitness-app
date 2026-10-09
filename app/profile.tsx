@@ -1,7 +1,11 @@
 import { useState } from 'react'
 import { Alert, Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native'
 import { router } from 'expo-router'
-import { actions, useStore } from '@/src/store/store'
+import * as DocumentPicker from 'expo-document-picker'
+import { File } from 'expo-file-system'
+import * as Sharing from 'expo-sharing'
+import { actions, restoreState, useStore } from '@/src/store/store'
+import { createExportFile, parseBackup } from '@/src/store/backup'
 import { programWeek, startForWeek } from '@/src/store/selectors'
 import { fmtLong, todayISO } from '@/src/lib/date'
 import { TOTAL_WEEKS, WEEKS } from '@/src/data/program'
@@ -14,6 +18,7 @@ const fmt = (value: number | null) => (value == null ? '' : String(value).replac
 export default function ProfileScreen() {
   const profile = useStore((s) => s.profile)
   const settings = useStore((s) => s.settings)
+  const state = useStore((s) => s)
   const today = todayISO()
   const currentWeek = programWeek(profile, today)
   const [height, setHeight] = useState(String(profile.heightCm))
@@ -21,6 +26,7 @@ export default function ProfileScreen() {
   const [goal, setGoal] = useState(fmt(profile.goalWeight))
   const [initial, setInitial] = useState(fmt(profile.initialWeight))
   const [week, setWeek] = useState(currentWeek)
+  const [backupBusy, setBackupBusy] = useState(false)
   const programStart = week === currentWeek ? profile.programStart : startForWeek(today, week)
 
   const save = () => {
@@ -46,6 +52,61 @@ export default function ProfileScreen() {
         },
       },
     ])
+
+  const exportBackup = async () => {
+    if (backupBusy) return
+    setBackupBusy(true)
+    try {
+      if (!(await Sharing.isAvailableAsync())) throw new Error('Системное меню сохранения недоступно на этом устройстве.')
+      const file = createExportFile(state)
+      await Sharing.shareAsync(file.uri, {
+        mimeType: 'application/json',
+        UTI: 'public.json',
+        dialogTitle: 'Сохранить резервную копию',
+      })
+    } catch (error) {
+      Alert.alert('Не удалось экспортировать', error instanceof Error ? error.message : 'Попробуй ещё раз.')
+    } finally {
+      setBackupBusy(false)
+    }
+  }
+
+  const importBackup = async () => {
+    if (backupBusy) return
+    setBackupBusy(true)
+    try {
+      const result = await DocumentPicker.getDocumentAsync({ type: ['application/json', 'text/plain'], copyToCacheDirectory: true })
+      if (result.canceled) return
+      const backup = parseBackup(await new File(result.assets[0].uri).text())
+      const date = new Date(backup.exportedAt).toLocaleString('ru-RU')
+      Alert.alert(
+        'Восстановить резервную копию?',
+        `Копия от ${date}. Текущие данные будут заменены. Если они нужны, сначала экспортируй их отдельным файлом.`,
+        [
+          { text: 'Отмена', style: 'cancel' },
+          {
+            text: 'Восстановить',
+            style: 'destructive',
+            onPress: () => {
+              setBackupBusy(true)
+              void restoreState(backup.data)
+                .then(() =>
+                  Alert.alert('Готово', 'Данные восстановлены из резервной копии.', [
+                    { text: 'Открыть главную', onPress: () => router.dismissAll() },
+                  ]),
+                )
+                .catch((error) => Alert.alert('Не удалось восстановить', error instanceof Error ? error.message : 'Попробуй ещё раз.'))
+                .finally(() => setBackupBusy(false))
+            },
+          },
+        ],
+      )
+    } catch (error) {
+      Alert.alert('Не удалось прочитать копию', error instanceof Error ? error.message : 'Выбери JSON-файл, созданный этим приложением.')
+    } finally {
+      setBackupBusy(false)
+    }
+  }
 
   return (
     <Screen footer={<Button title="Сохранить" size="lg" icon="checkmark" onPress={save} />}>
@@ -107,8 +168,27 @@ export default function ProfileScreen() {
       </Card>
 
       <SectionTitle>Данные</SectionTitle>
-      <Card>
-        <Txt v="soft">Все записи хранятся только на этом устройстве, без интернета и аккаунтов.</Txt>
+      <Card style={{ gap: 10 }}>
+        <Txt v="soft">
+          После каждого изменения приложение обновляет внутреннюю копию и хранит семь дневных снимков. Чтобы копия пережила удаление
+          приложения, сохрани JSON в «Файлы» или Downloads.
+        </Txt>
+        <View style={styles.backupActions}>
+          <Button
+            title={backupBusy ? 'Подожди…' : 'Экспортировать'}
+            tone="secondary"
+            icon="download-outline"
+            onPress={() => void exportBackup()}
+            disabled={backupBusy}
+          />
+          <Button
+            title="Восстановить"
+            tone="secondary"
+            icon="folder-open-outline"
+            onPress={() => void importBackup()}
+            disabled={backupBusy}
+          />
+        </View>
         <Button
           title="Сбросить все данные"
           tone="ghost"
@@ -183,4 +263,5 @@ const styles = StyleSheet.create({
   weekText: { color: colors.soft, fontFamily: fonts.bold, fontSize: 16 },
   toggle: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.line, marginVertical: 14 },
+  backupActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 })

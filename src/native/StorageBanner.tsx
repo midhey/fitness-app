@@ -7,6 +7,25 @@ import { Banner, Button } from './ui'
 export function StorageBanner() {
   const issue = useStorageIssue()
   if (!issue) return null
+  if (issue.kind === 'recovered')
+    return (
+      <Banner
+        icon="shield-checkmark-outline"
+        color={colors.posture}
+        title="Данные восстановлены из резервной копии"
+        action={
+          <Button
+            title="Понятно"
+            size="sm"
+            tone="secondary"
+            onPress={dismissStorageIssue}
+            style={{ alignSelf: 'flex-start', marginTop: 8 }}
+          />
+        }
+      >
+        Основное хранилище не прочиталось, поэтому приложение использовало последнюю исправную копию на устройстве.
+      </Banner>
+    )
   if (issue.kind === 'read')
     return (
       <Banner

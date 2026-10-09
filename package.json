@@ -20,6 +20,8 @@
     "expo-asset": "~57.0.19",
     "expo-audio": "~57.0.5",
     "expo-constants": "~57.0.21",
+    "expo-document-picker": "~57.0.3",
+    "expo-file-system": "~57.0.7",
     "expo-font": "~57.0.4",
     "expo-haptics": "~57.0.3",
     "expo-keep-awake": "~57.0.2",
@@ -27,6 +29,7 @@
     "expo-linking": "~57.0.12",
     "expo-navigation-bar": "~57.0.3",
     "expo-router": "~57.0.25",
+    "expo-sharing": "~57.0.22",
     "expo-splash-screen": "~57.0.9",
     "expo-status-bar": "~57.0.1",
     "expo-system-ui": "~57.0.4",
@@ -40,6 +43,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.10",
+    "expo-doctor": "^1.20.4",
     "prettier": "^3.9.9",
     "typescript": "~6.0.3"
   }

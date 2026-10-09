@@ -17,6 +17,7 @@ import type {
 } from '../types'
 import { isValidISO, mondayOf, todayISO } from '../lib/date'
 import { repsFor, repsLabel, setsFor, WORKOUTS } from '../data/program'
+import { readAutomaticBackup, writeAutomaticBackup } from './backup'
 
 const KEY = 'homefit.v1'
 export const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4)
@@ -39,9 +40,10 @@ function defaults(): AppState {
  * Проблема с хранилищем:
  * - read: не удалось прочитать — запись заблокирована, чтобы не затереть сохранённые данные значениями по умолчанию;
  * - corrupt: сохранённые данные повреждены, исходная строка скопирована в резервный ключ;
- * - write: последняя запись не удалась.
+ * - write: последняя запись не удалась;
+ * - recovered: основное хранилище восстановлено из последней внутренней копии.
  */
-export type StorageIssue = null | { kind: 'read' | 'corrupt' | 'write'; backupKey?: string }
+export type StorageIssue = null | { kind: 'read' | 'corrupt' | 'write' | 'recovered'; backupKey?: string }
 
 let state = defaults()
 let ready = false
@@ -56,17 +58,20 @@ function setIssue(next: StorageIssue) {
   emit()
 }
 
-async function persistNow() {
+async function persistNow(): Promise<boolean> {
   if (persistTimer) {
     clearTimeout(persistTimer)
     persistTimer = null
   }
-  if (persistBlocked) return
+  if (persistBlocked) return false
   try {
     await AsyncStorage.setItem(KEY, JSON.stringify(state))
+    await writeAutomaticBackup(state).catch(() => {})
     if (issue?.kind === 'write') setIssue(null)
+    return true
   } catch {
     setIssue({ kind: 'write' })
+    return false
   }
 }
 
@@ -127,6 +132,21 @@ export async function initializeStore() {
         persistBlocked = true
         issue = { kind: 'read' }
       }
+      if (!persistBlocked) {
+        const backup = await readAutomaticBackup()
+        if (backup) {
+          state = merge(backup.data)
+          issue = { kind: 'recovered', backupKey }
+          await AsyncStorage.setItem(KEY, JSON.stringify(state)).catch(() => {})
+        }
+      }
+    }
+  } else if (!persistBlocked) {
+    const backup = await readAutomaticBackup()
+    if (backup) {
+      state = merge(backup.data)
+      issue = { kind: 'recovered' }
+      await AsyncStorage.setItem(KEY, JSON.stringify(state)).catch(() => {})
     }
   }
   ready = true
@@ -150,6 +170,15 @@ export function acceptFreshStart() {
 }
 
 export const dismissStorageIssue = () => setIssue(null)
+
+/** Полностью заменяет состояние проверенной резервной копией и сразу сохраняет его. */
+export async function restoreState(saved: AppState) {
+  state = merge(saved)
+  persistBlocked = false
+  issue = null
+  emit()
+  if (!(await persistNow())) throw new Error('Не удалось записать восстановленные данные на устройство.')
+}
 
 function set(next: AppState) {
   state = next
