@@ -59,8 +59,8 @@ export default function HomeScreen() {
 
       <SectionTitle>Комплексы</SectionTitle>
       <View style={styles.tiles}>
-        <ComplexTile state={state} today={today} kind="daily" />
         <ComplexTile state={state} today={today} kind="back" />
+        <ComplexTile state={state} today={today} kind="daily" />
       </View>
 
       <SectionTitle action={{ label: 'Весь план', onPress: () => router.push('/plan') }}>Силовые этой недели</SectionTitle>
@@ -246,7 +246,7 @@ function ComplexTile({ state, today, kind }: { state: AppState; today: string; k
         </Text>
       </View>
       <Txt v="strong" style={{ marginTop: 12 }} numberOfLines={1}>
-        {kind === 'daily' ? 'Осанка' : 'Спина и таз'}
+        {kind === 'daily' ? 'Осанка' : 'Спина и шея'}
       </Txt>
       <Txt v="muted" numberOfLines={1}>
         {doneToday ? 'сегодня ✓' : `~${complex.minutes} мин`}

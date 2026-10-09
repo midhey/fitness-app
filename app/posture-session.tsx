@@ -4,7 +4,7 @@ import { router, useLocalSearchParams, useNavigation } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { ComplexId } from '@/src/types'
 import { actions } from '@/src/store/store'
-import { todayISO } from '@/src/lib/date'
+import { addDays, mondayOf, todayISO } from '@/src/lib/date'
 import { complexFor } from '@/src/data/posture'
 import { MUSCLE_NAMES } from '@/src/data/muscles'
 import { ExerciseIllustration } from '@/src/illustrations/ExerciseIllustration'
@@ -14,11 +14,16 @@ import { colors, fonts, tint } from '@/src/native/theme'
 import { success, tap } from '@/src/native/feedback'
 
 export default function PostureSessionScreen() {
-  const params = useLocalSearchParams<{ kind?: string; step?: string }>()
+  const params = useLocalSearchParams<{ kind?: string; step?: string; day?: string }>()
   const navigation = useNavigation()
   const kind: ComplexId = params.kind === 'back' ? 'back' : 'daily'
   // Набор фиксируется на момент открытия: «Спина и таз» меняется по дням
-  const [complex] = useState(() => complexFor(kind, todayISO()))
+  const [complex] = useState(() => {
+    // day — набор другого дня недели (0 = Пн); отметка всё равно ставится на сегодня
+    const day = Number(params.day)
+    const today = todayISO()
+    return complexFor(kind, Number.isInteger(day) && day >= 0 && day <= 6 ? addDays(mondayOf(today), day) : today)
+  })
   const count = complex.items.length
   const requested = Number(params.step)
   const [step, setStep] = useState(Number.isInteger(requested) ? Math.max(0, Math.min(count - 1, requested)) : 0)

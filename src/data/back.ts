@@ -1,12 +1,10 @@
 import type { PostureExercise } from '../types'
-import { diffDays } from '../lib/date'
+import { weekdayIdx } from '../lib/date'
 
-// ---------- Комплекс «Спина и таз» с ежедневной ротацией ----------
-// Для привычной позы «круглая грудная часть + прогиб в пояснице + плечи и голова вперёд».
-// Каждый день — шесть упражнений в одном и том же порядке задач:
-// мобилизация → бёдра → корпус → ягодицы → грудной отдел → расслабление.
-// В каждой задаче несколько равноценных вариантов, они чередуются по дням,
-// поэтому набор меняется, но всегда остаётся сбалансированным.
+// ---------- Вечерний комплекс «Спина, таз и шея» ----------
+// Для привычной позы «голова вперёд + круглая грудная часть + прогиб в пояснице».
+// План на неделю: у каждого дня свой набор, неделя повторяется.
+// Порядок задач каждый вечер одинаковый: мобилизация → бёдра → корпус → ягодицы → шея → грудь и лопатки → расслабление.
 // Не исправляет форму позвонков и не заменяет очную консультацию.
 
 /** Исходные шесть упражнений комплекса */
@@ -415,98 +413,210 @@ const EXTRA: PostureExercise[] = [
   },
 ]
 
-const BY_ID: Record<string, PostureExercise> = Object.fromEntries([...BASE, ...EXTRA].map((e) => [e.id, e]))
+/** Шея и верх спины: против головы, выдвинутой вперёд */
+const NECK: PostureExercise[] = [
+  {
+    id: 'chin_tuck_lift',
+    num: '',
+    name: 'Кивок с отрывом головы лёжа',
+    dose: '6 × удержание 10 с',
+    minutes: 2,
+    primary: ['neckFlexors'],
+    effect: 'Главное упражнение против выдвинутой головы: выносливость глубоких сгибателей шеи, которые держат голову над плечами',
+    steps: [
+      'Лёжа на спине, колени согнуты, без подушки.',
+      'Сделай мягкий кивок: подбородок к горлу, затылок скользит по полу вверх — как будто говоришь «да» одними глазами и подбородком.',
+      'Не теряя кивка, приподними голову над полом на 1–2 см. Держи 10 с, дыши спокойно.',
+      'Опусти голову, расслабься 5 с и повтори.',
+    ],
+    mistakes: [
+      'Подбородок уходит вверх при подъёме — работают поверхностные мышцы, а не глубокие',
+      'Голова поднимается высоко',
+      'Задержка дыхания и сжатая челюсть',
+      'Дрожь и боль — значит, слишком долго',
+    ],
+    tips: ['Не держится 10 с — начни с 5 с и добавляй по секунде. Когда 10 × 10 с даются легко, это хороший результат.'],
+    mode: {
+      type: 'hold',
+      reps: 6,
+      holdSec: 10,
+      moveSec: 5,
+      holdLabel: 'Кивок и голова на 1–2 см над полом',
+      moveLabel: 'Опусти голову, расслабься',
+    },
+    illustration: 'chin_tuck_lift',
+  },
+  {
+    id: 'prone_chin_tuck',
+    num: '',
+    name: 'Втягивание подбородка лёжа на животе',
+    dose: '8 × удержание 5 с',
+    minutes: 1.5,
+    primary: ['neckFlexors', 'upperBack'],
+    effect: 'Учит держать голову на одной линии со спиной против силы тяжести — то, что нужно сидя за столом',
+    steps: [
+      'Ляг на живот, лоб на сложенное полотенце, руки вдоль тела ладонями вниз.',
+      'Мягко втяни подбородок к горлу — затылок тянется вверх, к потолку.',
+      'Не поднимая подбородок, оторви лоб от полотенца на 1 см. Взгляд строго в пол. Держи 5 с.',
+      'Опусти лоб и расслабься. Плечи тянутся к тазу, лопатки слегка сведены.',
+    ],
+    mistakes: ['Запрокидывание головы — взгляд уходит вперёд', 'Высокий подъём головы', 'Плечи поднимаются к ушам'],
+    mode: { type: 'hold', reps: 8, holdSec: 5, moveSec: 4, holdLabel: 'Подбородок втянут, лоб над полотенцем', moveLabel: 'Опусти лоб' },
+    illustration: 'prone_chin_tuck',
+  },
+  {
+    id: 'upper_trap_stretch',
+    num: '',
+    name: 'Растяжка верха трапеции сидя',
+    dose: '2 × 30 с на каждую сторону',
+    minutes: 2.5,
+    primary: ['upperTraps'],
+    effect: 'Снимает зажатость в верхней части плеч и шеи, которая растёт, когда голова долго выдвинута вперёд',
+    steps: [
+      'Сядь на край стула, спина ровно. Правой рукой возьмись за сиденье — правое плечо опускается вниз.',
+      'Мягко втяни подбородок и наклони голову влево, ухо к плечу. Плечи не поднимаются.',
+      'Левую ладонь можно положить на голову — только её вес, без давления.',
+      'Держи 30 с до мягкого растяжения справа, затем смени сторону.',
+    ],
+    mistakes: ['Тянуть голову рукой с силой', 'Поворот лица вместо наклона', 'Подъём плеча растягиваемой стороны'],
+    tips: ['Чуть поверни нос к подмышке — растяжение сместится назад, в мышцу, поднимающую лопатку.'],
+    mode: { type: 'timed', seconds: 30, rounds: 2, perSide: true },
+    illustration: 'upper_trap_stretch',
+  },
+  {
+    id: 'suboccipital_release',
+    num: '',
+    name: 'Расслабление затылка на валике',
+    dose: '15 медленных кивков, ~2 мин',
+    minutes: 2,
+    primary: ['neckFlexors'],
+    effect: 'Расслабляет мышцы под затылком — при выдвинутой голове они постоянно напряжены и дают тяжесть в голове',
+    steps: [
+      'Сверни полотенце в плотный валик толщиной 5–6 см. Ляг на спину, валик — под основание черепа, где затылок переходит в шею.',
+      'Расслабь челюсть и плечи. Голова лежит на валике своим весом.',
+      'На вдохе подбородок чуть уходит вверх, на выдохе — мягкий кивок вниз. Голова только перекатывается по валику.',
+      'Медленно, без усилия. Головокружение или онемение — прекрати.',
+    ],
+    mistakes: ['Валик под шеей, а не под затылком', 'Резкие или большие движения', 'Напряжение челюсти'],
+    mode: {
+      type: 'paced',
+      cycles: 15,
+      phases: [
+        { label: 'Вдох — подбородок чуть вверх', sec: 3 },
+        { label: 'Выдох — мягкий кивок', sec: 4 },
+      ],
+    },
+    illustration: 'suboccipital_release',
+  },
+  {
+    id: 'chair_thoracic',
+    num: '',
+    name: 'Разгибание грудного отдела через спинку стула',
+    dose: '8 медленных повторений',
+    minutes: 1.5,
+    primary: ['upperBack'],
+    effect: 'Возвращает подвижность грудному отделу: когда он не разгибается, голова неизбежно уходит вперёд',
+    steps: [
+      'Сядь на стул с невысокой жёсткой спинкой, ягодицы у самой спинки. Край спинки — под лопатками.',
+      'Ладони за головой, локти вперёд, подбородок слегка втянут.',
+      'Вдох — раскройся назад через край спинки: двигается грудная клетка, поясница прижата к спинке.',
+      'Выдох — вернись в ровное положение.',
+    ],
+    mistakes: ['Прогиб в пояснице вместо груди', 'Запрокидывание головы', 'Локти разводятся и тянут шею'],
+    tips: ['Спинка слишком высокая или мягкая — делай разгибание на полотенце лёжа.'],
+    mode: {
+      type: 'paced',
+      cycles: 8,
+      phases: [
+        { label: 'Вдох — раскройся назад', sec: 4 },
+        { label: 'Выдох — вернись', sec: 3 },
+      ],
+    },
+    illustration: 'chair_thoracic',
+  },
+  {
+    id: 'prone_w',
+    num: '',
+    name: '«W»-подъём лёжа на животе',
+    dose: '2 × 8, удержание 3 с',
+    minutes: 2,
+    primary: ['lowerTraps', 'upperBack', 'rearDelts'],
+    effect: 'Нижняя и средняя трапеция тянут лопатки вниз и назад — плечи раскрываются, голове проще встать над ними',
+    steps: [
+      'Ляг на живот, лоб на полотенце. Руки буквой «W»: локти согнуты и прижаты ближе к бокам, ладони у плеч.',
+      'Втяни подбородок. Сведи лопатки вниз и друг к другу.',
+      'Подними локти и кисти над полом на 2–3 см. Держи 3 с.',
+      'Опусти и расслабь. После 8 повторов — отдых 20 с и ещё подход.',
+    ],
+    mistakes: ['Подъём головы и прогиб шеи', 'Плечи тянутся к ушам', 'Прогиб в пояснице'],
+    mode: {
+      type: 'hold',
+      sets: 2,
+      reps: 8,
+      holdSec: 3,
+      moveSec: 3,
+      restSec: 20,
+      holdLabel: 'Локти над полом — лопатки вниз',
+      moveLabel: 'Опусти руки',
+    },
+    illustration: 'prone_w',
+  },
+]
+
+const BY_ID: Record<string, PostureExercise> = Object.fromEntries([...BASE, ...EXTRA, ...NECK].map((e) => [e.id, e]))
 
 export interface BackSlot {
   id: string
   title: string
   why: string
-  /** Варианты по кругу; повтор id — упражнение важнее и встречается чаще */
-  pool: string[]
 }
 
+/** Порядок задач — одинаковый каждый вечер */
 export const BACK_SLOTS: BackSlot[] = [
-  {
-    id: 'mobility',
-    title: 'Мобилизация',
-    why: 'Разогреть позвоночник и таз мягким движением',
-    pool: ['pelvic_tilt', 'quad_rock', 'knees_to_chest'],
-  },
-  {
-    id: 'hips',
-    title: 'Бёдра',
-    why: 'Растянуть мышцы, которые тянут таз в наклон или заставляют сгибаться поясницу. Сгибатели бедра — чаще других',
-    pool: ['hip_flexor_stretch', 'hamstring_stretch', 'hip_flexor_stretch', 'figure_four'],
-  },
-  {
-    id: 'core',
-    title: 'Корпус',
-    why: 'Удерживать поясницу ровной, пока двигаются руки и ноги',
-    pool: ['dead_bug_slow', 'heel_taps', 'knee_plank'],
-  },
-  {
-    id: 'glutes',
-    title: 'Ягодицы',
-    why: 'Разгибать бедро ягодицами, а не поясницей',
-    pool: ['bridge_hold', 'bridge_march', 'hip_hinge'],
-  },
-  {
-    id: 'thoracic',
-    title: 'Грудь и шея',
-    why: 'Раскрыть грудной отдел и плечи — противовес «круглой» спине',
-    pool: ['towel_thoracic', 'lat_stretch', 'supine_chin_tuck'],
-  },
-  {
-    id: 'relax',
-    title: 'Расслабление',
-    why: 'Снять напряжение и закончить спокойным дыханием',
-    pool: ['childs_pose', 'breathing_9090'],
-  },
+  { id: 'mobility', title: 'Мобилизация', why: 'Разогреть позвоночник и таз мягким движением' },
+  { id: 'hips', title: 'Бёдра', why: 'Растянуть мышцы, которые тянут таз в наклон. Сгибатели бедра — три раза в неделю' },
+  { id: 'core', title: 'Корпус', why: 'Удерживать поясницу ровной, пока двигаются руки и ноги' },
+  { id: 'glutes', title: 'Ягодицы', why: 'Разгибать бедро ягодицами, а не поясницей' },
+  { id: 'neck', title: 'Шея', why: 'Каждый день: глубокие мышцы шеи держат голову над плечами' },
+  { id: 'upper', title: 'Грудь и лопатки', why: 'Раскрыть грудной отдел и вернуть лопатки вниз и назад' },
+  { id: 'relax', title: 'Расслабление', why: 'Снять зажатость шеи и спины перед сном' },
 ]
 
-/** Точка отсчёта ротации — понедельник */
-const EPOCH = '2026-01-05'
-
-/** Детерминированное «случайное» число 0…1 по номеру: у всех один и тот же набор на дату */
-function hash01(n: number): number {
-  let x = (n ^ 0x9e3779b9) >>> 0
-  x = Math.imul(x ^ (x >>> 16), 0x85ebca6b) >>> 0
-  x = Math.imul(x ^ (x >>> 13), 0xc2b2ae35) >>> 0
-  return ((x ^ (x >>> 16)) >>> 0) / 4294967296
-}
-
-const picks: string[][] = []
-
 /**
- * Упражнения на день от начала ротации. В каждой задаче выбирается вариант, отличный от вчерашнего;
- * выбор псевдослучайный, поэтому задачи не крутятся синхронно и сочетания каждый день новые.
+ * План на неделю: Пн … Вс, в каждом дне по упражнению на каждую задачу из BACK_SLOTS.
+ * Неделя повторяется; каждая задача получает разные упражнения, нагрузка на шею — ежедневно.
  */
-function pickIds(day: number): string[] {
-  for (let d = picks.length; d <= day; d++) {
-    const prev = picks[d - 1] ?? BACK_SLOTS.map((slot) => slot.pool[0])
-    picks.push(
-      BACK_SLOTS.map((slot, i) => {
-        const options = slot.pool.filter((id) => id !== prev[i])
-        return options[Math.floor(hash01(d * 31 + i) * options.length)]
-      }),
-    )
-  }
-  return picks[day]
+export const BACK_WEEK: string[][] = [
+  ['pelvic_tilt', 'hip_flexor_stretch', 'dead_bug_slow', 'bridge_hold', 'supine_chin_tuck', 'towel_thoracic', 'upper_trap_stretch'],
+  ['quad_rock', 'hamstring_stretch', 'heel_taps', 'hip_hinge', 'chin_tuck_lift', 'prone_w', 'suboccipital_release'],
+  ['knees_to_chest', 'hip_flexor_stretch', 'knee_plank', 'bridge_march', 'prone_chin_tuck', 'chair_thoracic', 'childs_pose'],
+  ['pelvic_tilt', 'figure_four', 'dead_bug_slow', 'bridge_hold', 'chin_tuck_lift', 'lat_stretch', 'upper_trap_stretch'],
+  ['quad_rock', 'hip_flexor_stretch', 'heel_taps', 'bridge_march', 'supine_chin_tuck', 'towel_thoracic', 'breathing_9090'],
+  ['knees_to_chest', 'hamstring_stretch', 'knee_plank', 'hip_hinge', 'prone_chin_tuck', 'prone_w', 'suboccipital_release'],
+  ['pelvic_tilt', 'figure_four', 'heel_taps', 'bridge_hold', 'chin_tuck_lift', 'chair_thoracic', 'breathing_9090'],
+]
+
+for (const day of BACK_WEEK) for (const id of day) if (!BY_ID[id]) throw new Error(`Нет упражнения ${id} в плане «Спина, таз и шея»`)
+
+/** Набор на день недели (0 = Пн): по одному упражнению на задачу, номера по порядку */
+export function backDay(weekday: number): PostureExercise[] {
+  return BACK_WEEK[weekday].map((id, index) => ({ ...BY_ID[id], num: String(index + 1), focus: BACK_SLOTS[index].title }))
 }
 
-/** Набор упражнений «Спина и таз» на дату: по одному из каждой задачи, номера по порядку */
+/** Набор упражнений на дату */
 export function backComplexFor(date: string): PostureExercise[] {
-  const ids = pickIds(Math.max(0, diffDays(date, EPOCH)))
-  return BACK_SLOTS.map((slot, index) => ({ ...BY_ID[ids[index]], num: String(index + 1), focus: slot.title }))
+  return backDay(weekdayIdx(date))
 }
 
-/** Все упражнения комплекса по задачам — для справки */
-export const BACK_LIBRARY: { slot: BackSlot; items: PostureExercise[] }[] = BACK_SLOTS.map((slot) => ({
+export const backMinutes = (items: PostureExercise[]) => Math.round(items.reduce((sum, e) => sum + e.minutes, 0))
+
+/** Все упражнения плана по задачам — для справки */
+export const BACK_LIBRARY: { slot: BackSlot; items: PostureExercise[] }[] = BACK_SLOTS.map((slot, index) => ({
   slot,
-  items: [...new Set(slot.pool)].map((id) => BY_ID[id]),
+  items: [...new Set(BACK_WEEK.map((day) => day[index]))].map((id) => BY_ID[id]),
 }))
 
-export const BACK_EXERCISE_COUNT = Object.keys(BY_ID).length
+export const BACK_EXERCISE_COUNT = new Set(BACK_WEEK.flat()).size
 
-/** Цель по регулярности: каждый день */
+/** Цель по регулярности: каждый вечер */
 export const BACK_PER_WEEK = 7

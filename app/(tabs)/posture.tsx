@@ -2,12 +2,12 @@ import { useState } from 'react'
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import type { ComplexId, PostureLog } from '@/src/types'
+import type { ComplexId, PostureExercise, PostureLog } from '@/src/types'
 import { actions, useStore } from '@/src/store/store'
 import { isComplex, postureStreak, postureThisWeek } from '@/src/store/selectors'
-import { addDays, todayISO } from '@/src/lib/date'
+import { plural, todayISO, WEEKDAYS_FULL, WEEKDAYS_SHORT, weekdayIdx } from '@/src/lib/date'
 import { complexFor, POSTURE_MAP, POSTURE_PRINCIPLES, POSTURE_WARNING } from '@/src/data/posture'
-import { BACK_EXERCISE_COUNT, BACK_LIBRARY, BACK_PER_WEEK, backComplexFor } from '@/src/data/back'
+import { BACK_EXERCISE_COUNT, BACK_LIBRARY, BACK_PER_WEEK, backDay, backMinutes } from '@/src/data/back'
 import { StaticIllustration } from '@/src/illustrations/ExerciseIllustration'
 import {
   Banner,
@@ -20,67 +20,52 @@ import {
   HeroCard,
   ProgressBar,
   Screen,
-  Segmented,
   SectionTitle,
   Stat,
   Txt,
 } from '@/src/native/ui'
 import { colors, fonts, tint } from '@/src/native/theme'
+import { tap } from '@/src/native/feedback'
 
-const start = (kind: ComplexId, step?: number) =>
-  router.push({ pathname: '/posture-session', params: step === undefined ? { kind } : { kind, step: String(step) } })
+const capitalize = (value: string) => value[0].toUpperCase() + value.slice(1)
+
+/** Открыть комплекс; day — набор другого дня недели (0 = Пн), step — с какого упражнения начать */
+const start = (kind: ComplexId, step?: number, day?: number) =>
+  router.push({
+    pathname: '/posture-session',
+    params: { kind, ...(step === undefined ? {} : { step: String(step) }), ...(day === undefined ? {} : { day: String(day) }) },
+  })
 
 export default function PostureScreen() {
   const logs = useStore((s) => s.posture)
   const today = todayISO()
-  const [list, setList] = useState<ComplexId>('back')
-  const complex = complexFor(list, today)
+  const daily = complexFor('daily', today)
 
   return (
     <Screen tabs>
-      <Header title="Осанка" subtitle="Мобильность, сила и привычка держать тело" />
+      <Header title="Осанка" subtitle="Голова над плечами, ровная спина, свободный таз" />
       <View style={styles.stats}>
         <Stat label="Серия" value={postureStreak(logs, today)} color={colors.posture} />
+        <Stat label="Вечер" value={`${postureThisWeek(logs, today, 'back')}/${BACK_PER_WEEK}`} />
         <Stat label="Осанка" value={`${postureThisWeek(logs, today)}/7`} />
-        <Stat label="Спина и таз" value={`${postureThisWeek(logs, today, 'back')}/${BACK_PER_WEEK}`} />
       </View>
 
       <ComplexCard kind="back" logs={logs} today={today} />
-      <ComplexCard kind="daily" logs={logs} today={today} />
+
+      <SectionTitle>Вечер · план на неделю</SectionTitle>
+      <WeekPlan today={today} />
 
       <Banner icon="warning-outline" title="Когда остановиться">
         {POSTURE_WARNING.text}
       </Banner>
 
-      <SectionTitle>Упражнения на сегодня</SectionTitle>
-      <Segmented<ComplexId>
-        options={[
-          { value: 'back', label: 'Спина и таз' },
-          { value: 'daily', label: 'Осанка' },
-        ]}
-        value={list}
-        onChange={setList}
-        color={colors.posture}
-      />
+      <SectionTitle>Днём · комплекс для осанки</SectionTitle>
+      <ComplexCard kind="daily" logs={logs} today={today} />
       <Card style={{ padding: 6 }}>
-        {complex.items.map((exercise, index) => (
-          <Pressable key={exercise.id} onPress={() => start(list, index)} style={[styles.exercise, index > 0 && styles.divider]}>
-            <StaticIllustration id={exercise.illustration} style={styles.thumb} />
-            <View style={{ flex: 1 }}>
-              {exercise.focus ? <Text style={styles.focus}>{exercise.focus}</Text> : null}
-              <Txt v="strong" numberOfLines={2}>
-                {exercise.num}. {exercise.name}
-              </Txt>
-              <Txt v="muted" numberOfLines={1}>
-                {exercise.dose}
-              </Txt>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.mute} />
-          </Pressable>
+        {daily.items.map((exercise, index) => (
+          <ExerciseRow key={exercise.id} exercise={exercise} first={index === 0} onPress={() => start('daily', index)} />
         ))}
       </Card>
-
-      {list === 'back' ? <BackRotation today={today} /> : null}
 
       <Collapsible title="Принципы">
         <View style={{ gap: 10 }}>
@@ -120,8 +105,8 @@ function ComplexCard({ kind, logs, today }: { kind: ComplexId; logs: PostureLog[
   return (
     <HeroCard color={colors.posture}>
       <View style={styles.between}>
-        <Chip color={colors.posture} icon={kind === 'daily' ? 'body' : 'shuffle'}>
-          {kind === 'daily' ? 'ежедневно · постоянный' : 'ежедневно · новый набор'}
+        <Chip color={colors.posture} icon={kind === 'daily' ? 'body' : 'moon'}>
+          {kind === 'daily' ? 'днём · постоянный' : 'вечером · свой набор на день'}
         </Chip>
         {done ? (
           <View style={styles.done}>
@@ -137,18 +122,6 @@ function ComplexCard({ kind, logs, today }: { kind: ComplexId; logs: PostureLog[
         ~{complex.minutes} мин · {complex.items.length} упражнений
         {done && done.steps < done.total ? ` · сделано ${done.steps} из ${done.total}` : ''}
       </Txt>
-      {kind === 'back' ? (
-        <View style={styles.focusList}>
-          {complex.items.map((e, index) => (
-            <View key={e.id} style={[styles.focusRow, index > 0 && styles.focusDivider]}>
-              <Text style={styles.focusTitle}>{e.focus}</Text>
-              <Text style={styles.focusName} numberOfLines={2}>
-                {e.name}
-              </Text>
-            </View>
-          ))}
-        </View>
-      ) : null}
       <View style={{ marginVertical: 14 }}>
         <ProgressBar value={week / target} color={colors.posture} />
         <Txt v="muted" style={{ marginTop: 6 }}>
@@ -167,36 +140,80 @@ function ComplexCard({ kind, logs, today }: { kind: ComplexId; logs: PostureLog[
   )
 }
 
-/** Как устроена ротация: завтрашний набор и все варианты по задачам */
-function BackRotation({ today }: { today: string }) {
-  const tomorrow = backComplexFor(addDays(today, 1))
+function ExerciseRow({ exercise, first, onPress }: { exercise: PostureExercise; first: boolean; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} style={[styles.exercise, !first && styles.divider]}>
+      <StaticIllustration id={exercise.illustration} style={styles.thumb} />
+      <View style={{ flex: 1 }}>
+        {exercise.focus ? <Text style={styles.focus}>{exercise.focus}</Text> : null}
+        <Txt v="strong" numberOfLines={2}>
+          {exercise.num}. {exercise.name}
+        </Txt>
+        <Txt v="muted" numberOfLines={1}>
+          {exercise.dose}
+        </Txt>
+      </View>
+      <Ionicons name="chevron-forward" size={18} color={colors.mute} />
+    </Pressable>
+  )
+}
+
+/** Вечерний план: выбор дня недели, его набор и справка по задачам */
+function WeekPlan({ today }: { today: string }) {
+  const todayIdx = weekdayIdx(today)
+  const [day, setDay] = useState(todayIdx)
+  const items = backDay(day)
+  const isToday = day === todayIdx
   return (
     <>
-      <Card>
-        <View style={styles.between}>
-          <Txt v="h2">Завтра</Txt>
-          <Txt v="muted">~{Math.round(tomorrow.reduce((s, e) => s + e.minutes, 0))} мин</Txt>
+      <View style={styles.days}>
+        {WEEKDAYS_SHORT.map((label, index) => {
+          const on = index === day
+          return (
+            <Pressable
+              key={label}
+              onPress={() => {
+                tap()
+                setDay(index)
+              }}
+              accessibilityState={{ selected: on }}
+              style={[styles.day, on && styles.dayOn]}
+            >
+              <Text style={[styles.dayText, on && { color: colors.bg }]}>{label}</Text>
+              <View style={[styles.dayDot, index === todayIdx && { backgroundColor: on ? colors.bg : colors.posture }]} />
+            </Pressable>
+          )
+        })}
+      </View>
+      <Card style={{ padding: 6 }}>
+        <View style={styles.dayHead}>
+          <Txt v="h2">{isToday ? 'Сегодня' : capitalize(WEEKDAYS_FULL[day])}</Txt>
+          <Txt v="muted">
+            ~{backMinutes(items)} мин · {items.length} упражнений
+          </Txt>
         </View>
-        <View style={{ gap: 8, marginTop: 10 }}>
-          {tomorrow.map((e) => (
-            <View key={e.id} style={styles.tomorrowRow}>
-              <Text style={styles.tomorrowFocus}>{e.focus}</Text>
-              <Txt v="soft" style={{ flex: 1 }} numberOfLines={1}>
-                {e.name}
-              </Txt>
-            </View>
-          ))}
-        </View>
+        {items.map((exercise, index) => (
+          <ExerciseRow key={exercise.id} exercise={exercise} first={false} onPress={() => start('back', index, day)} />
+        ))}
       </Card>
-      <Collapsible title={`Как меняется комплекс · ${BACK_EXERCISE_COUNT} упражнений`}>
+      {!isToday ? (
+        <Button
+          title={`Сделать набор на ${WEEKDAYS_FULL[day].replace(/а$/, 'у')}`}
+          tone="secondary"
+          icon="play"
+          onPress={() => start('back', undefined, day)}
+        />
+      ) : null}
+      <Collapsible
+        title={`Как устроена неделя · ${BACK_EXERCISE_COUNT} ${plural(BACK_EXERCISE_COUNT, 'упражнение', 'упражнения', 'упражнений')}`}
+      >
         <Txt v="soft">
-          Порядок задач каждый день один и тот же: разогреть позвоночник, растянуть бёдра, включить корпус и ягодицы, раскрыть грудной отдел
-          и закончить расслаблением. Меняется только упражнение внутри задачи — нагрузка разнообразная, но всегда сбалансированная. Одно и
-          то же упражнение два дня подряд не повторяется, а сгибатели бедра попадают в набор чаще других: при прогибе в пояснице они важнее
-          остальных растяжек.
+          Каждый вечер — семь упражнений в одном порядке: разогреть позвоночник и таз, растянуть бёдра, включить корпус и ягодицы,
+          поработать над шеей, раскрыть грудной отдел и лопатки, расслабиться. По дням меняются только сами упражнения внутри задач, а
+          неделя повторяется. Шея — каждый день: глубокие мышцы шеи укрепляются только регулярной нагрузкой.
         </Txt>
         <View style={{ gap: 16, marginTop: 16 }}>
-          {BACK_LIBRARY.map(({ slot, items }, index) => (
+          {BACK_LIBRARY.map(({ slot, items: variants }, index) => (
             <View key={slot.id}>
               <Txt v="strong" color={colors.posture}>
                 {index + 1}. {slot.title}
@@ -205,7 +222,7 @@ function BackRotation({ today }: { today: string }) {
                 {slot.why}
               </Txt>
               <View style={styles.library}>
-                {items.map((e) => (
+                {variants.map((e) => (
                   <View key={e.id} style={styles.libraryItem}>
                     <StaticIllustration id={e.illustration} />
                     <Text style={styles.libraryName} numberOfLines={2}>
@@ -236,24 +253,33 @@ const styles = StyleSheet.create({
   },
   doneText: { color: colors.bg, fontFamily: fonts.bold, fontSize: 12 },
   actions: { flexDirection: 'row', gap: 8 },
-  focusList: {
-    marginTop: 14,
-    paddingHorizontal: 12,
-    borderRadius: 14,
-    backgroundColor: tint(colors.posture, 0.07),
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: tint(colors.posture, 0.22),
-  },
-  focusRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
-  focusDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: tint(colors.posture, 0.18) },
-  focusTitle: { width: 98, color: colors.posture, fontFamily: fonts.semibold, fontSize: 12 },
-  focusName: { flex: 1, color: colors.text, fontFamily: fonts.medium, fontSize: 13 },
   exercise: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 8 },
   divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
   thumb: { width: 80, aspectRatio: 4 / 3 },
   focus: { color: colors.posture, fontFamily: fonts.semibold, fontSize: 11, letterSpacing: 0.4, textTransform: 'uppercase' },
-  tomorrowRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  tomorrowFocus: { width: 104, color: colors.mute, fontFamily: fonts.medium, fontSize: 12 },
+  days: { flexDirection: 'row', gap: 6 },
+  day: {
+    flex: 1,
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+    backgroundColor: colors.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+  },
+  dayOn: { backgroundColor: colors.posture, borderColor: colors.posture },
+  dayText: { color: colors.soft, fontFamily: fonts.semibold, fontSize: 13 },
+  dayDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: 'transparent' },
+  dayHead: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    paddingHorizontal: 10,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
   library: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   libraryItem: { width: '48%' },
   libraryName: { color: colors.soft, fontFamily: fonts.medium, fontSize: 12, marginTop: 4 },
