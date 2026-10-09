@@ -467,6 +467,10 @@ export function FrontFigure({
   const Cp = (key: string, A: V, B: V, r1: number, r2: number) =>
     tm.push(<Path key={key} d={capsule(A, B, r1, r2)} fill={COLORS.muscle} opacity={0.92 * hlK} />)
 
+  if (m.has('upperTraps')) {
+    if (onL) Cp('utL', v(x - 4, sy - 1), v(x - 15, sy + 3), 3.4, 2.6)
+    if (onR) Cp('utR', v(x + 4, sy - 1), v(x + 15, sy + 3), 3.4, 2.6)
+  }
   if (back) {
     if (m.has('upperBack')) {
       Cp('ub1', v(x - 9, sy + lt * 0.12), v(x - 4, sy + lt * 0.42), 4.2, 3.2)

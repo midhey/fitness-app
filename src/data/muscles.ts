@@ -21,5 +21,6 @@ export const MUSCLE_NAMES: Record<MuscleId, string> = {
   forearms: 'Предплечья',
   serratus: 'Передняя зубчатая',
   neckFlexors: 'Глубокие сгибатели шеи',
+  upperTraps: 'Верх трапеции',
   hipFlexors: 'Сгибатели бедра',
 }

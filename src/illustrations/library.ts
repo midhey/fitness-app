@@ -1179,6 +1179,192 @@ const breathing9090: Illustration = {
   figures: [{ rig: 'side', muscles: ['core'], keys: [breathPose(-4, 0.35), breathPose(2, 1)] }],
 }
 
+// ---------- шея и грудной отдел: вечерний комплекс ----------
+
+/** Крупный план головы лёжа на спине — как в «удержании подбородка лёжа» */
+const SUPINE_CLOSE = 'translate(-133 -340) scale(2.4)'
+
+const chinTuckLift: Illustration = {
+  id: 'chin_tuck_lift',
+  view: 'Вид сбоку · крупно, лёжа',
+  timeline: [0.8, 1.4, 2.8, 1.4],
+  props: [],
+  phases: [
+    { label: 'Кивок', key: 0 },
+    { label: 'Отрыв на 1–2 см', key: 1 },
+  ],
+  note: 'Сначала кивок, потом голова приподнимается целиком — подбородок остаётся прижатым',
+  figures: [
+    {
+      rig: 'side',
+      muscles: ['neckFlexors'],
+      transform: SUPINE_CLOSE,
+      props: [FLOOR, { type: 'mat', x0: 40, x1: 280 }],
+      keys: [supine({ neck: 0, tilt: 14, hl: 0.5 }), supine({ neck: 22, tilt: 20, hl: 1 })],
+    },
+  ],
+}
+
+/** Лёжа на животе, голова справа, лоб на сложенном полотенце */
+const prone = (neck: number, tilt: number, hl: number): SidePose => ({
+  p: [130, 202],
+  torso: 90,
+  spine: 0,
+  neck,
+  tilt,
+  armN: { a: -88, b: 0 },
+  armF: { a: -88, b: 0 },
+  legN: { a: -90, b: 0 },
+  legF: { a: -90, b: 0 },
+  footN: 0,
+  footF: 0,
+  hl,
+})
+
+const proneChinTuck: Illustration = {
+  id: 'prone_chin_tuck',
+  view: 'Вид сбоку · крупно, лёжа на животе',
+  timeline: [0.8, 1.4, 2.4, 1.4],
+  props: [],
+  phases: [
+    { label: 'Лоб на полотенце', key: 0 },
+    { label: 'Подбородок к себе', key: 1 },
+  ],
+  note: 'Голова отрывается всего на сантиметр, взгляд в пол — затылок тянется вверх, а не назад',
+  figures: [
+    {
+      rig: 'side',
+      muscles: ['neckFlexors', 'upperBack'],
+      transform: 'translate(-275 -352) scale(2.4)',
+      props: [FLOOR, { type: 'mat', x0: 40, x1: 280 }, { type: 'towel', x: 181, y: 205, w: 22, h: 7 }],
+      keys: [prone(6, 0, 0.35), prone(-6, 16, 1)],
+    },
+  ],
+}
+
+/** Сидя, вид спереди крупно: правая рука держит сиденье, левая мягко лежит на голове */
+const trapPose = (tilt: number, hand: Pair, elbow: Pair, hl: number): FrontPose => ({
+  c: [160, 152],
+  headTilt: tilt,
+  armL: { a: 10, b: 0 },
+  armR: { pt: [elbow[0], elbow[1], hand[0], hand[1]] },
+  legL: { a: 0, b: 0 },
+  legR: { a: 0, b: 0 },
+  hl,
+})
+
+const upperTrapStretch: Illustration = {
+  id: 'upper_trap_stretch',
+  view: 'Вид спереди · сидя на стуле, крупно',
+  timeline: [0.6, 2.0, 2.6, 1.8],
+  props: [],
+  phases: [
+    { label: 'Ровно', key: 0 },
+    { label: 'Ухо к плечу', key: 1 },
+  ],
+  note: 'Тянется сторона шеи, от которой наклоняешься; плечо этой стороны опущено — рука держит сиденье',
+  figures: [
+    {
+      rig: 'front',
+      view: 'front',
+      muscleSide: 'L',
+      muscles: ['upperTraps'],
+      transform: 'translate(-160 -96) scale(2)',
+      keys: [trapPose(0, [-24, -32], [6, -26], 0.35), trapPose(26, [-14, -34], [10, -25], 1)],
+    },
+  ],
+}
+
+const suboccipitalRelease: Illustration = {
+  id: 'suboccipital_release',
+  view: 'Вид сбоку · крупно, валик под затылком',
+  timeline: [0.4, 2.0, 0.4, 2.6],
+  props: [],
+  phases: [
+    { label: 'Подбородок вверх', key: 0 },
+    { label: 'Мягкий кивок', key: 1 },
+  ],
+  note: 'Валик — у основания черепа; голова лишь перекатывается по нему, без усилия',
+  figures: [
+    {
+      rig: 'side',
+      muscles: ['neckFlexors'],
+      transform: SUPINE_CLOSE,
+      props: [FLOOR, { type: 'mat', x0: 40, x1: 280 }, { type: 'roll', x: 124, y: 204, r: 4.2 }],
+      keys: [supine({ neck: 4, tilt: -16, hl: 0.3 }), supine({ neck: 4, tilt: 16, hl: 0.8 })],
+    },
+  ],
+}
+
+/** Сидя на стуле, ладони за головой: разгибание грудного отдела через спинку */
+const chairPose = (p: Pair, torso: number, spine: number, hl: number): SidePose =>
+  stand({
+    p,
+    torso,
+    spine,
+    neck: 0,
+    armN: { pt: [16, -18, 2, -30] },
+    armF: { pt: [15, -18, 1, -30] },
+    legN: { a: 90, b: 90 },
+    legF: { a: 88, b: 88 },
+    footN: 90,
+    footF: 90,
+    hl,
+  })
+
+const chairThoracic: Illustration = {
+  id: 'chair_thoracic',
+  view: 'Вид сбоку · спинка стула под лопатками',
+  timeline: [0.6, 2.0, 1.4, 1.8],
+  props: [FLOOR, { type: 'chair', x: 118, y: 172, w: 50 }, { type: 'post', x: 124, w: 6, y0: 136 }],
+  phases: [
+    { label: 'Ровно', key: 0 },
+    { label: 'Раскрытие назад', key: 1 },
+  ],
+  note: 'Сгибается грудной отдел над краем спинки; поясница прижата к ней, рёбра не выпячиваются',
+  figures: [
+    {
+      rig: 'side',
+      muscles: ['upperBack'],
+      keys: [chairPose([146, 168], 0, 0, 0.35), chairPose([146, 168], -20, -6, 1)],
+    },
+  ],
+}
+
+const wPose = (lift: number): FrontPose => ({
+  c: [0, 0],
+  armL: { a: 58, b: 78 },
+  armR: { a: 58, b: 78 },
+  legL: { a: 3, b: -3 },
+  legR: { a: 3, b: -3 },
+  liftL: lift,
+  liftR: lift,
+})
+
+const proneW: Illustration = {
+  id: 'prone_w',
+  view: 'Вид сверху · лёжа на животе',
+  timeline: [0.5, 0.8, 2.2, 0.8],
+  props: [
+    { type: 'matTop', x: 50, y: 34, w: 222, h: 176 },
+    { type: 'towel', x: 204, y: 108, w: 30, h: 28 },
+  ],
+  phases: [
+    { label: 'Исходно', key: 0 },
+    { label: 'Подъём «W»', key: 1 },
+  ],
+  note: 'Локти и кисти поднимаются на 2–3 см, лопатки тянутся вниз и друг к другу',
+  figures: [
+    {
+      rig: 'front',
+      view: 'top',
+      muscles: ['lowerTraps', 'upperBack', 'rearDelts'],
+      transform: 'translate(150 122) rotate(90)',
+      keys: [wPose(0), wPose(1)],
+    },
+  ],
+}
+
 const tricepsExt: Illustration = {
   id: 'triceps_ext',
   view: 'Вид сбоку · лёжа на коврике',
@@ -1241,5 +1427,11 @@ export const ILLUSTRATIONS: Record<string, Illustration> = Object.fromEntries(
     bridgeMarch,
     hipHinge,
     breathing9090,
+    chinTuckLift,
+    proneChinTuck,
+    upperTrapStretch,
+    suboccipitalRelease,
+    chairThoracic,
+    proneW,
   ].map((i) => [i.id, i]),
 )

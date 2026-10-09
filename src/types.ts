@@ -19,6 +19,7 @@ export type MuscleId =
   | 'forearms'
   | 'serratus'
   | 'neckFlexors'
+  | 'upperTraps'
   | 'hipFlexors'
 
 export type Tracking = 'weighted' | 'bodyweight' | 'optionalWeight'

@@ -51,6 +51,8 @@ export interface FrontPose {
   lt?: number
   /** Смещение головы по вертикали относительно обычного положения */
   headDy?: number
+  /** Наклон головы вбок, градусы; положительный — к правому краю картинки */
+  headTilt?: number
   armL: Limb
   armR: Limb
   legL: Limb
@@ -275,7 +277,9 @@ export function solveFront(p: FrontPose): FrontSkeleton {
   const shoulderY = c.y - lt
   const SL = v(c.x - L.shoulderHalf, shoulderY + 3)
   const SR = v(c.x + L.shoulderHalf, shoulderY + 3)
-  const head = v(c.x, shoulderY - 8 - L.head + (p.headDy ?? 0))
+  const neckH = 8 + L.head - (p.headDy ?? 0) + 2
+  const tilt = (p.headTilt ?? 0) * RAD
+  const head = v(c.x + neckH * Math.sin(tilt), shoulderY + 2 - neckH * Math.cos(tilt))
   const HL = v(c.x - L.hipHalf, c.y)
   const HR = v(c.x + L.hipHalf, c.y)
   const armL = solveLimb(SL, p.armL, L.upperArm, L.forearm, 1, -1, true)
